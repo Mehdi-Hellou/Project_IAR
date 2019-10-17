@@ -30,7 +30,9 @@ class State:
         to_print=tkinter.Tk()
         for i in range(25):
             for j in range(25):
-                tkinter.Label(to_print, text=str(self.environment[i][j]), borderwidth=1).grid(row=i, column=j)
+                #tkinter.Label(to_print, text=str(self.environment[i][j]), borderwidth=1).grid(row=i, column=j)
+                case = tkinter.Canvas(to_print, height=25, width=25, relief='solid', bg="white").grid(row=i, column=j)
+                l = tkinter.Label(case, text = str(self.environment[i][j]), borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
         to_print.mainloop()
 
 test= State([])
