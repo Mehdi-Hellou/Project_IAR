@@ -30,10 +30,17 @@ class State:
         to_print=tkinter.Tk()
         for i in range(25):
             for j in range(25):
-                #tkinter.Label(to_print, text=str(self.environment[i][j]), borderwidth=1).grid(row=i, column=j)
                 case = tkinter.Canvas(to_print, height=25, width=25, relief='solid', bg="white").grid(row=i, column=j)
-                l = tkinter.Label(case, text = str(self.environment[i][j]), borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
+                if (i,j) in self.ennemies:
+                    l = tkinter.Label(case, text = "E", borderwidth=1, fg='blue', bg="white").grid(row=i, column=j)
+                else:
+                    if self.environment[i][j]==2:
+                        l = tkinter.Label(case, text = "$", borderwidth=1, fg='green', bg="white").grid(row=i, column=j)
+                    elif self.environment[i][j] == 1:
+                        l= tkinter.Label(case, text="O", borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
+                    else:
+                        l= tkinter.Label(case, text="", borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
         to_print.mainloop()
 
-test= State([])
+test= State([(5,3)])
 test.print_grid()
