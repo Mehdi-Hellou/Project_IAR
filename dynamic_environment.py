@@ -33,19 +33,20 @@ class State:
     
     def print_grid(self):
         to_print=tkinter.Tk()
+        
         for i in range(25):
-            for j in range(25):
-                case = tkinter.Canvas(to_print, height=25, width=25,  bg="white").grid(row=j, column=i)
+            for j in range(25):         
+                case = tkinter.Canvas(to_print, height=25, width=25,  bg="white").grid(row=i, column=j)       
                 if (i,j) in self.ennemies:
-                    l = tkinter.Label(case, text = "E", borderwidth=1, fg='blue', bg="white").grid(row=j, column=i)
+                    l = tkinter.Label(case, text = "E", borderwidth=1, fg='blue', bg="white").grid(row=i, column=j)
                 elif (i,j)==self.agent:
-                    l = tkinter.Label(case, text = "A", borderwidth=1, fg='red', bg="white").grid(row=j, column=i)
+                    l = tkinter.Label(case, text = "I", borderwidth=1, fg='red', bg="white").grid(row=i, column=j)
                 elif self.environment[i][j]==2:
-                    l = tkinter.Label(case, text = "$", borderwidth=1, fg='green', bg="white").grid(row=j, column=i)
+                    l = tkinter.Label(case, text = "$", borderwidth=1, fg='green', bg="white").grid(row=i, column=j)
                 elif self.environment[i][j] == 1:
-                    l= tkinter.Label(case, text="O", borderwidth=1, fg='black', bg="white").grid(row=j, column=i)
+                    l= tkinter.Label(case, text="O", borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
                 else:
-                    l= tkinter.Label(case, text="", borderwidth=1, fg='black', bg="white").grid(row=j, column=i)
+                    l= tkinter.Label(case, text="", borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
 
         to_print.mainloop()
 
@@ -65,9 +66,42 @@ class State:
                     l+=" "
             print(l)
 
+    def print_grid_line(self):
+        to_print=tkinter.Tk()
+
+        windows_Size=800
+
+        can=tkinter.Canvas(to_print,bg="light gray", height=windows_Size, width=windows_Size)
+        can.pack()
+
+        PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fénêtre ainsi que la taille de notre grillage dans la simulation 
+
+        X0 = Y0 = int(PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
+
+        for i in range(25): 
+            can.create_line(0,PAS*i,windows_Size,PAS*i,fill='black')      # on crée manuellement des lignes horizontales  
+            can.create_line(PAS*i , 0,PAS*i,windows_Size,fill='black')    # on crée manuellement des lignes verticales 
+
+            for j in range(25):         
+                centre = (X0+j*PAS, Y0+i*PAS) 
+
+                if (i,j) in self.ennemies:
+                    can.create_text(centre, text = "E")
+                elif (i,j)==self.agent:
+                    can.create_text(centre, text = "I")
+                elif self.environment[i][j]==2:
+                    can.create_text(centre, text = "$")
+                elif self.environment[i][j] == 1:
+                    can.create_text(centre, text = "O")
+
+
+        to_print.mainloop()
+
+
 
 if __name__ == '__main__':
     
+    #poisiton des obstacles 
     obstacles = [] 
     obstacles+= [(0,0), (0,1), (0,2), (0,3), (0,4), (0,5), (0,19), (0,20), (0,21), (0,22), (0,23), (0,24)]
     obstacles+=[(1,0), (1,24)]
@@ -92,4 +126,4 @@ if __name__ == '__main__':
     obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
 
     test= State(obstacles)
-    test.print_grid_terminal()
+    test.print_grid_line()
