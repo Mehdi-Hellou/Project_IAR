@@ -10,6 +10,7 @@ heigth = 25
 class State:
     def __init__(self, obstacles):
         self.environment = [[ 0 for j in range(25)] for i in range(25)]
+        #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
@@ -30,6 +31,49 @@ class State:
     
     def remaining_energy(self):
         return self.energy
+    
+    
+    #------------- fonction pour tester une case
+    
+    def lookupObstacles(self, x, y):
+        if x<0 or x>=width or y<0 or y>=heigth:
+            return True
+        if self.environment==1:
+            return True
+        else:
+            return False
+    
+    def lookupFood(self, x, y):
+        if x<0 or x>=width or y<0 or y>=heigth:
+            return False
+        if self.environment==2:
+            return True
+        else:
+            return False
+    
+    def lookupEnnemies(self, x, y):
+        if x<0 or x>=width or y<0 or y>=heigth:
+            return False
+        if (x,y) in self.ennemies:
+            return True
+        else:
+            return False
+    
+    #---------------fonction de patch d'observation-------------
+    
+    def opatch(self, lookup, x, y):
+        return self.lookup(x,y)
+    
+    def Xpatch(self, lookup, x, y):
+        return self.lookup(x,y) or self.lookup(x-1,y) or self.lookup(x+1,y) or self.lookup(x,y-1) or self.lookup(x,y+1)
+    
+    def Opatch(self, lookup, x, y):
+        return self.Xpatch(lookup,x,y) or self.lookup(x-1,y-1) or self.lookup(x-1,y+1) or self.lookup(x+1,y-1) or self.lookup(x+1,y+1)
+    
+    def Ypatch(self, lookup, x, y):
+        return self.Opatch(lookup,x,y) or self.lookup(x-2,y) or self.lookup(x+2,y) or self.lookup(x,y-2) or self.lookup(x,y+2)
+    
+    #-------------- fonctions d'affichage (à garder en bas)------------------
     
     def print_grid(self):
         to_print=tkinter.Tk()
@@ -83,7 +127,7 @@ class State:
             can.create_line(PAS*i , 0,PAS*i,windows_Size,fill='black')    # on crée manuellement des lignes verticales 
 
             for j in range(25):         
-                centre = (X0+j*PAS, Y0+i*PAS) 
+                centre = (X0+i*PAS, Y0+j*PAS) 
 
                 if (i,j) in self.ennemies:
                     can.create_text(centre, text = "E")
