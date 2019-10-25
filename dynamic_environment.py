@@ -63,16 +63,19 @@ class State:
     #---------------fonction de patch d'observation-------------
     
     def opatch(self, lookup, x, y):
-        return self.lookup(x,y)
+        return self.lookupObstacles(x,y)
     
     def Xpatch(self, lookup, x, y):
-        return self.lookup(x,y) or self.lookup(x-1,y) or self.lookup(x+1,y) or self.lookup(x,y-1) or self.lookup(x,y+1)
+        return self.lookupObstacles(x,y) or self.lookupObstacles(x-1,y) or self.lookupObstacles(x+1,y)\
+         or self.lookupObstacles(x,y-1) or self.lookupObstacles(x,y+1)
     
     def Opatch(self, lookup, x, y):
-        return self.Xpatch(lookup,x,y) or self.lookup(x-1,y-1) or self.lookup(x-1,y+1) or self.lookup(x+1,y-1) or self.lookup(x+1,y+1)
+        return self.Xpatch(lookup,x,y) or self.lookupObstacles(x-1,y-1) or self.lookupObstacles(x-1,y+1)\
+         or self.lookupObstacles(x+1,y-1) or self.lookupObstacles(x+1,y+1)
     
     def Ypatch(self, lookup, x, y):
-        return self.Opatch(lookup,x,y) or self.lookup(x-2,y) or self.lookup(x+2,y) or self.lookup(x,y-2) or self.lookup(x,y+2)
+        return self.Opatch(lookup,x,y) or self.lookupObstacles(x-2,y) or self.lookupObstacles(x+2,y)\
+         or self.lookupObstacles(x,y-2) or self.lookupObstacles(x,y+2)
     
     #-------------- fonctions d'affichage (à garder en bas)------------------
     
@@ -165,12 +168,12 @@ class State:
                 self.can.move(self.agentText, self.PAS, 0)
                 
         
-        grille.after(1000,self.moveAgent)
+        grille.after(1000,self.moveAgent)    # Suscribe to make the agent move again after 1 second 
 
     def update(self):
         self.print_grid_line()
 
-        grille.after(1000,self.moveAgent)
+        grille.after(1000,self.moveAgent) # Suscribe to make the agent move after 1 second
         grille.mainloop()
 
 if __name__ == '__main__':
