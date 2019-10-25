@@ -1,11 +1,13 @@
 import sys 
 import random
 import tkinter
+from agent import *
 random.seed()
 
 #dimension de la grille
 width = 25
 heigth = 25
+grille =  tkinter.Tk()
 
 class State:
     def __init__(self, obstacles):
@@ -14,7 +16,7 @@ class State:
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
-        self.agent = (18,12)
+        self.agent = Agent(18,12, 40)
         for i in range(15):
             x = random.randint(0,24)
             y = random.randint(0,24)
@@ -27,18 +29,17 @@ class State:
         return
     
     def is_empty(self,x,y):
-        return (self.environment[x][y]==0) and ((x,y)!=self.agent) and not((x,y) in self.ennemies) and self.environment[x][y]!=1
+        return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in self.ennemies) and self.environment[x][y]!=1
     
     def remaining_energy(self):
         return self.energy
-    
     
     #------------- fonction pour tester une case
     
     def lookupObstacles(self, x, y):
         if x<0 or x>=width or y<0 or y>=heigth:
             return True
-        if self.environment==1:
+        if self.environment[x][y]==1:
             return True
         else:
             return False
@@ -46,7 +47,7 @@ class State:
     def lookupFood(self, x, y):
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
-        if self.environment==2:
+        if self.environment[x][y]==2:
             return True
         else:
             return False
@@ -76,14 +77,14 @@ class State:
     #-------------- fonctions d'affichage (à garder en bas)------------------
     
     def print_grid(self):
-        to_print=tkinter.Tk()
+        #to_print=tkinter.Tk()
         
         for i in range(25):
             for j in range(25):         
                 case = tkinter.Canvas(to_print, height=25, width=25,  bg="white").grid(row=i, column=j)       
                 if (i,j) in self.ennemies:
                     l = tkinter.Label(case, text = "E", borderwidth=1, fg='blue', bg="white").grid(row=i, column=j)
-                elif (i,j)==self.agent:
+                elif (i,j)==self.agent.getPosition():
                     l = tkinter.Label(case, text = "I", borderwidth=1, fg='red', bg="white").grid(row=i, column=j)
                 elif self.environment[i][j]==2:
                     l = tkinter.Label(case, text = "$", borderwidth=1, fg='green', bg="white").grid(row=i, column=j)
@@ -92,7 +93,7 @@ class State:
                 else:
                     l= tkinter.Label(case, text="", borderwidth=1, fg='black', bg="white").grid(row=i, column=j)
 
-        to_print.mainloop()
+        #to_print.mainloop()
 
     def print_grid_terminal(self):
         for i in range(25):
@@ -100,7 +101,7 @@ class State:
             for j in range(25):
                 if (i,j) in self.ennemies:
                     l += "E"
-                elif (i,j)==self.agent:
+                elif (i,j)==self.agent.getPosition():
                     l+= "I"
                 elif self.environment[i][j]==2:
                     l+="$"
@@ -111,37 +112,66 @@ class State:
             print(l)
 
     def print_grid_line(self):
-        to_print=tkinter.Tk()
-
         windows_Size=800
 
-        can=tkinter.Canvas(to_print,bg="light gray", height=windows_Size, width=windows_Size)
-        can.pack()
+        self.can=tkinter.Canvas(grille,bg="light gray", height=windows_Size, width=windows_Size)
+        self.can.pack()
 
-        PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fénêtre ainsi que la taille de notre grillage dans la simulation 
+        self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fénêtre ainsi que la taille de notre grillage dans la simulation 
 
-        X0 = Y0 = int(PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
+        X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
 
         for i in range(25): 
-            can.create_line(0,PAS*i,windows_Size,PAS*i,fill='black')      # on crée manuellement des lignes horizontales  
-            can.create_line(PAS*i , 0,PAS*i,windows_Size,fill='black')    # on crée manuellement des lignes verticales 
+            self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on crée manuellement des lignes horizontales  
+            self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on crée manuellement des lignes verticales 
 
             for j in range(25):         
-                centre = (X0+i*PAS, Y0+j*PAS) 
+                centre = (X0+i*self.PAS, Y0+j*self.PAS) 
 
                 if (i,j) in self.ennemies:
-                    can.create_text(centre, text = "E")
-                elif (i,j)==self.agent:
-                    can.create_text(centre, text = "I")
+                    self.ennemieText = self.can.create_text(centre, text = "E")
+                elif (i,j)==self.agent.getPosition():
+                    self.agentText = self.can.create_text(centre, text = "I")
                 elif self.environment[i][j]==2:
-                    can.create_text(centre, text = "$")
+                    self.can.create_text(centre, text = "$")
                 elif self.environment[i][j] == 1:
-                    can.create_text(centre, text = "O")
+                    self.can.create_text(centre, text = "O")
+        
 
+    def moveAgent(self):
+        
+        direction = random.randint(0,3)
+        previousX, previousY = self.agent.getPosition()
 
-        to_print.mainloop()
+        self.agent.move(direction)
 
+        x, y = self.agent.getPosition()
 
+        if self.lookupObstacles(x,y): 
+            self.agent.setPosition(previousX, previousY)
+
+        else:
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers le Norde
+            if direction == 0: 
+                self.can.move(self.agentText, 0, -self.PAS)
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers l'Ouest
+            elif direction == 1: 
+                self.can.move(self.agentText, -self.PAS, 0)
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers le Sud
+            elif direction == 2: 
+                self.can.move(self.agentText, 0, self.PAS)
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers l'Est
+            elif direction == 3: 
+                self.can.move(self.agentText, self.PAS, 0)
+                
+        
+        grille.after(1000,self.moveAgent)
+
+    def update(self):
+        self.print_grid_line()
+
+        grille.after(1000,self.moveAgent)
+        grille.mainloop()
 
 if __name__ == '__main__':
     
@@ -170,4 +200,7 @@ if __name__ == '__main__':
     obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
 
     test= State(obstacles)
-    test.print_grid_line()
+
+    test.update()
+
+    
