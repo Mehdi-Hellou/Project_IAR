@@ -40,6 +40,7 @@ class State:
         if x<0 or x>=width or y<0 or y>=heigth:
             return True
         if self.environment[x][y]==1:
+            print("obstacles !!! ")
             return True
         else:
             return False
@@ -48,6 +49,7 @@ class State:
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
         if self.environment[x][y]==2:
+            print("food !!! ")
             return True
         else:
             return False
@@ -56,28 +58,45 @@ class State:
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
         if (x,y) in self.ennemies:
+            print("An ennemiy !!! ")
             return True
         else:
             return False
     
+    def lookUpSensor(self, lookup, x, y):
+        #  if 2 we use the sensor to detect the food 
+        if lookup == 2:          
+            self.lookupFood(x,y)
+            
+        #  if 1 we use the sensor to detect the ennemies 
+        elif lookup == 1: 
+            
+            self.lookupEnnemies(x,y)
+        #  else we use the sensor to detect the obstacles
+        else: 
+            
+            self.lookupObstacles(x,y)
+
     #---------------fonction de patch d'observation-------------
     
-    def opatch(self, lookup, x, y):
-        return self.lookupObstacles(x,y)
+    def opatch(self, x, y):
+        return self.lookUpSensor(0, x,y)
     
     def Xpatch(self, lookup, x, y):
-        return self.lookupObstacles(x,y) or self.lookupObstacles(x-1,y) or self.lookupObstacles(x+1,y)\
-         or self.lookupObstacles(x,y-1) or self.lookupObstacles(x,y+1)
+        # lookup could be 2 to detect the food or 1 to detect the ennemies  
+        return self.lookUpSensor(lookup, x,y) or self.lookUpSensor(lookup, x-1,y) or self.lookUpSensor(lookup, x+1,y)\
+         or self.lookUpSensor(lookup, x,y-1) or self.lookUpSensor(lookup, x,y+1)
     
     def Opatch(self, lookup, x, y):
-        return self.Xpatch(lookup,x,y) or self.lookupObstacles(x-1,y-1) or self.lookupObstacles(x-1,y+1)\
-         or self.lookupObstacles(x+1,y-1) or self.lookupObstacles(x+1,y+1)
+        # lookup could be 2 to detect the food or 1 to detect the ennemies
+        return self.Xpatch(lookup,x,y) or self.lookUpSensor(lookup, x-1,y-1) or self.lookUpSensor(lookup, x-1,y+1)\
+         or self.lookUpSensor(lookup, x+1,y-1) or self.lookUpSensor(lookup, x+1,y+1)
     
-    def Ypatch(self, lookup, x, y):
-        return self.Opatch(lookup,x,y) or self.lookupObstacles(x-2,y) or self.lookupObstacles(x+2,y)\
-         or self.lookupObstacles(x,y-2) or self.lookupObstacles(x,y+2)
+    def Ypatch(self, x, y):
+        return self.Opatch(2,x,y) or self.lookUpSensor(2, x-2,y) or self.lookUpSensor(2, x+2,y)\
+         or self.lookUpSensor(2, x,y-2) or self.lookUpSensor(2, x,y+2)
     
-    #-------------- fonctions d'affichage (à garder en bas)------------------
+    #-------------- fonctions d'affichage (a garder en bas)------------------
     
     def print_grid(self):
         #to_print=tkinter.Tk()
@@ -120,13 +139,13 @@ class State:
         self.can=tkinter.Canvas(grille,bg="light gray", height=windows_Size, width=windows_Size)
         self.can.pack()
 
-        self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fénêtre ainsi que la taille de notre grillage dans la simulation 
+        self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fenetre ainsi que la taille de notre grillage dans la simulation 
 
         X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
 
         for i in range(25): 
-            self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on crée manuellement des lignes horizontales  
-            self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on crée manuellement des lignes verticales 
+            self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on cree manuellement des lignes horizontales  
+            self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on cree manuellement des lignes verticales 
 
             for j in range(25):         
                 centre = (X0+i*self.PAS, Y0+j*self.PAS) 
@@ -166,14 +185,18 @@ class State:
             # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers l'Est
             elif direction == 3: 
                 self.can.move(self.agentText, self.PAS, 0)
-                
         
-        grille.after(1000,self.moveAgent)    # Suscribe to make the agent move again after 1 second 
+        # check if the patch works welll          
+        #self.opatch(self.agent.x, self.agent.y)
+        #self.Xpatch(0,self.agent.x, self.agent.y)
+        #self.Opatch(0, self.agent.x, self.agent.y)
+        #self.Ypatch(self.agent.x, self.agent.y)
+        grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
 
     def update(self):
         self.print_grid_line()
 
-        grille.after(1000,self.moveAgent) # Suscribe to make the agent move after 1 second
+        grille.after(1000,self.moveAgent)  # Suscribe to make move the agent 
         grille.mainloop()
 
 if __name__ == '__main__':
