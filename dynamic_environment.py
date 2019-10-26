@@ -16,7 +16,7 @@ class State:
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
-        self.agent = Agent(18,12, 40)
+        self.agent = Agent(18,13, 40)
         for i in range(15):
             x = random.randint(0,24)
             y = random.randint(0,24)
@@ -40,7 +40,7 @@ class State:
         if x<0 or x>=width or y<0 or y>=heigth:
             return True
         if self.environment[x][y]==1:
-            print("obstacles !!! ")
+            #print("obstacles !!! ")
             return True
         else:
             return False
@@ -49,7 +49,7 @@ class State:
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
         if self.environment[x][y]==2:
-            print("food !!! ")
+            #print("food !!! ")
             return True
         else:
             return False
@@ -58,7 +58,7 @@ class State:
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
         if (x,y) in self.ennemies:
-            print("An ennemiy !!! ")
+            #print("An ennemiy !!! ")
             return True
         else:
             return False
@@ -66,16 +66,16 @@ class State:
     def lookUpSensor(self, lookup, x, y):
         #  if 2 we use the sensor to detect the food 
         if lookup == 2:          
-            self.lookupFood(x,y)
+            return self.lookupFood(x,y)
             
         #  if 1 we use the sensor to detect the ennemies 
         elif lookup == 1: 
             
-            self.lookupEnnemies(x,y)
+            return self.lookupEnnemies(x,y)
         #  else we use the sensor to detect the obstacles
         else: 
             
-            self.lookupObstacles(x,y)
+            return self.lookupObstacles(x,y)
 
     #---------------fonction de patch d'observation-------------
     
@@ -191,6 +191,7 @@ class State:
         #self.Xpatch(0,self.agent.x, self.agent.y)
         #self.Opatch(0, self.agent.x, self.agent.y)
         #self.Ypatch(self.agent.x, self.agent.y)
+        print(self.agent.sensorObstacle(self))
         grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
 
     def update(self):
