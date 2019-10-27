@@ -1,7 +1,7 @@
 import sys 
 import random
 import tkinter
-
+import dynamic_environment
 
 #list des positions des patch dans le senseurs
 
@@ -20,7 +20,7 @@ Oennemies=[(0,-6), (-2,-4), (0,-4), (2,-4), (-4,-2), (-2,-2), (4,-2), (2,-2), (-
 Xennemies=[(0,-2), (-1,-1), (0,-1), (1,-1), (-2,0), (-1,0), (1,0), (2,0), (0,2), (-1,1), (0,1), (1,1)]
 
 #senseur d'obstacle (patches o)
-oobstacles=[(0,-4), (-1,-3), (0,-3), (1,-3), (-2,-2), (-1,-2), (0,-2), (1,-2), (2,-2), (-3,-1), (-2,-1), (-1,-1), (0,-1), (3,-1), (2,-1), (1,-1), (-4,0), (-3,0),(-2,0), (-1,0), (4,0), (3,0), (2,0), (1,0), (0,4), (-1,3), (0,3), (1,3), (-2,2), (-1,2), (0,2), (1,2), (2,2), (-3,1), (-2,1), (-1,1), (0,-), (3,1), (2,1), (1,1)
+oobstacles=[(0,-4), (-1,-3), (0,-3), (1,-3), (-2,-2), (-1,-2), (0,-2), (1,-2), (2,-2), (-3,-1), (-2,-1), (-1,-1), (0,-1), (3,-1), (2,-1), (1,-1), (-4,0), (-3,0),(-2,0), (-1,0), (4,0), (3,0), (2,0), (1,0), (0,4), (-1,3), (0,3), (1,3), (-2,2), (-1,2), (0,2), (1,2), (2,2), (-3,1), (-2,1), (-1,1), (0,1), (3,1), (2,1), (1,1)]
 
 
 
@@ -33,6 +33,8 @@ class Agent(object):
         self.x = x 
         self.y = y
         self.energy = energy
+        return
+    
 
     def remaining_energy(self):
         return self.energy
@@ -62,6 +64,28 @@ class Agent(object):
     def setPosition(self, x,y): 
         self.x = x
         self.y = y
+            
+    def sensors(self, state):
+        #return the vector of detection
+        result=[]
+        (x,y)=state.agent
+        #food
+        for (i,j) in Yfood:
+            result.append(state.Ypatch(x+i, y+j))
+        for (i,j) in Ofood:
+            result.append(state.Opatch(2, x+i, y+j))
+        for (i,j) in Xfood:
+            result.append(state.Xpatch(2, x+i, y+j))
+        #ennemies
+        for (i,j) in Oennemies:
+            result.append(state.Opatch(1, x+i, y+j))
+        for (i,j) in Xennemies:
+            result.append(state.Xpatch(1, x+i, y+j))
+        #obstacles
+        for (i,j) in oobstacles:
+            result.append(state.opatch(x+i, y+j))
+        return result
+            
 
     def sensorObstacle(self,state): 
         positionObstacle = []   # List of position of obstacle in function of position of agent 

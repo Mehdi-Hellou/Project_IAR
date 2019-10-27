@@ -7,12 +7,14 @@ random.seed()
 #dimension de la grille
 width = 25
 heigth = 25
+#CHANGER ÇA!
+#Il ne faut surtout pas que ce truc soit global! on va avoir besoin d'importer ce module partout!
 grille =  tkinter.Tk()
 
 class State:
     def __init__(self, obstacles):
         self.environment = [[ 0 for j in range(25)] for i in range(25)]
-        #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely
+        #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely)
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
