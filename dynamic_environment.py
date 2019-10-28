@@ -15,7 +15,7 @@ class State:
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
-        self.agent = Agent(18,13, 40)
+        self.agent = Agent(13,12, 40)
         for i in range(15):
             x = random.randint(0,24)
             y = random.randint(0,24)
@@ -64,16 +64,13 @@ class State:
     
     def lookUpSensor(self, lookup, x, y):
         #  if 2 we use the sensor to detect the food 
-        if lookup == 2:          
+        if lookup == 2:   
             return self.lookupFood(x,y)
-            
         #  if 1 we use the sensor to detect the ennemies 
-        elif lookup == 1: 
-            
+        elif lookup == 1:           
             return self.lookupEnnemies(x,y)
         #  else we use the sensor to detect the obstacles
         else: 
-            
             return self.lookupObstacles(x,y)
 
     #---------------fonction de patch d'observation-------------
@@ -141,7 +138,11 @@ class State:
         self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fenetre ainsi que la taille de notre grillage dans la simulation 
 
         X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
-
+        
+        # For debug part, return the position of the sensor into the grid according the agent position
+        #sensorsY, sensorsO, sensorsX = self.agent.sensors(self)
+        
+        self.Opatch(2,self.agent.x, self.agent.y)
         for i in range(25): 
             self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on cree manuellement des lignes horizontales  
             self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on cree manuellement des lignes verticales 
@@ -149,15 +150,25 @@ class State:
             for j in range(25):         
                 centre = (X0+i*self.PAS, Y0+j*self.PAS) 
 
-                if (i,j) in self.ennemies:
-                    self.ennemieText = self.can.create_text(centre, text = "E")
-                elif (i,j)==self.agent.getPosition():
+                # Part to write the sensors shape for debug 
+                """if (i,j) in sensorsY: 
+                    self.can.create_text(centre, text = "Y")
+                elif (i,j) in sensorsO: 
+                    self.can.create_text(centre, text = "O")
+                elif (i,j) in sensorsX: 
+                    self.can.create_text(centre, text = "X")"""
+                
+                if (i,j)==self.agent.getPosition():
                     self.agentText = self.can.create_text(centre, text = "I")
+                
+                elif (i,j) in self.ennemies:
+                    self.ennemieText = self.can.create_text(centre, text = "E")
+                
                 elif self.environment[i][j]==2:
                     self.can.create_text(centre, text = "$")
                 elif self.environment[i][j] == 1:
-                    self.can.create_text(centre, text = "O")
-        
+                    self.can.create_text(centre, text = "O")  
+                        
 
     def moveAgent(self):
         
@@ -185,13 +196,9 @@ class State:
             elif direction == 3: 
                 self.can.move(self.agentText, self.PAS, 0)
         
-        # check if the patch works welll          
-        #self.opatch(self.agent.x, self.agent.y)
-        #self.Xpatch(0,self.agent.x, self.agent.y)
-        #self.Opatch(0, self.agent.x, self.agent.y)
-        #self.Ypatch(self.agent.x, self.agent.y)
-        #print(self.agent.sensorObstacle(self))
-        self.grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
+        self.agent.sensors(self)
+
+        #self.grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
 
     def update(self):
         self.print_grid_line()

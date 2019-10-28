@@ -7,7 +7,7 @@ import dynamic_environment
 
 #senseur de nourriture
 #patches Y
-Yfood=[(0,-10), (-2,-8), (2,-8), (-4, -6), (4,-6), (-8,-2), (8,-2), (-10,0), (10, 0),(0,10), (-2,8), (2,8), (-4, 6), (4,6), (-8,2), (8,2)]
+Yfood=[(0,-10), (-2,-8), (2,-8), (-4, -6), (4,-6),(-6, -4), (6, -4), (-8,-2), (8,-2), (-10,0), (10, 0),(0,10), (-2,8), (2,8), (-4, 6), (4,6), (-6, 4), (6, 4), (-8,2), (8,2)]
 #patches O
 Ofood=[(0,-6), (-2,-4), (0,-4), (2,-4), (-4,-2), (-2,-2), (4,-2), (2,-2), (-6,0), (-4, 0), (4,0), (6,0), (0,6), (-2,4), (0,4), (2,4), (-4,2), (-2,2), (4,2), (2,2)]
 #patches X
@@ -68,23 +68,36 @@ class Agent(object):
     def sensors(self, state):
         #return the vector of detection
         result=[]
-        (x,y)=state.agent
+        (x,y)=state.agent.getPosition()
+
+        #List for debug and see if the sensors are well-made 
+        """positionSensorY = []
+        positionSensorX = []
+        positionSensorO = []
+        positionSensoro = []"""
+
         #food
         for (i,j) in Yfood:
             result.append(state.Ypatch(x+i, y+j))
+            #positionSensorY.append((x+i, y+j))
         for (i,j) in Ofood:
             result.append(state.Opatch(2, x+i, y+j))
+            #positionSensorO.append((x+i, y+j))
         for (i,j) in Xfood:
             result.append(state.Xpatch(2, x+i, y+j))
+            #positionSensorX.append((x+i, y+j))
         #ennemies
         for (i,j) in Oennemies:
             result.append(state.Opatch(1, x+i, y+j))
+            #positionSensorO.append((x+i,y+j))
         for (i,j) in Xennemies:
             result.append(state.Xpatch(1, x+i, y+j))
+            #positionSensorX.append((x+i,y+j))
         #obstacles
         for (i,j) in oobstacles:
             result.append(state.opatch(x+i, y+j))
         return result
+        #return positionSensorY, positionSensorO, positionSensorX
             
 
     def sensorObstacle(self,state): 
