@@ -7,9 +7,6 @@ random.seed()
 #dimension de la grille
 width = 25
 heigth = 25
-#CHANGER ÇA!
-#Il ne faut surtout pas que ce truc soit global! on va avoir besoin d'importer ce module partout!
-grille =  tkinter.Tk()
 
 class State:
     def __init__(self, obstacles):
@@ -137,8 +134,8 @@ class State:
 
     def print_grid_line(self):
         windows_Size=800
-
-        self.can=tkinter.Canvas(grille,bg="light gray", height=windows_Size, width=windows_Size)
+        self.grille = tkinter.Tk()
+        self.can=tkinter.Canvas(self.grille,bg="light gray", height=windows_Size, width=windows_Size)
         self.can.pack()
 
         self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fenetre ainsi que la taille de notre grillage dans la simulation 
@@ -193,14 +190,14 @@ class State:
         #self.Xpatch(0,self.agent.x, self.agent.y)
         #self.Opatch(0, self.agent.x, self.agent.y)
         #self.Ypatch(self.agent.x, self.agent.y)
-        print(self.agent.sensorObstacle(self))
-        grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
+        #print(self.agent.sensorObstacle(self))
+        self.grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
 
     def update(self):
         self.print_grid_line()
 
-        grille.after(1000,self.moveAgent)  # Suscribe to make move the agent 
-        grille.mainloop()
+        self.grille.after(1000,self.moveAgent)  # Suscribe to make move the agent 
+        self.grille.mainloop()
 
 if __name__ == '__main__':
     
