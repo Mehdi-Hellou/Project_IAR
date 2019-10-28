@@ -132,3 +132,36 @@ class Agent(object):
             k-=1
 
         return positionObstacle
+
+
+        def debugSensor(self, state, type): 
+             result=[]
+        (x,y)=state.agent.getPosition()
+
+        #List for debug and see if the sensors are well-made 
+        positionSensorY = []
+        positionSensorX = []
+        positionSensorO = []
+        positionSensoro = []
+
+        if type ==2: 
+            #food
+            for (i,j) in Yfood:
+                positionSensorY.append((x+i, y+j))
+            for (i,j) in Ofood:
+                positionSensorO.append((x+i, y+j))
+            for (i,j) in Xfood:
+                positionSensorX.append((x+i, y+j))
+            return positionSensorY ,positionSensorO, positionSensorX
+        #ennemies
+        elif type == 1: 
+            for (i,j) in Oennemies:
+                positionSensorO.append((x+i,y+j))
+            for (i,j) in Xennemies:
+                positionSensorX.append((x+i,y+j))
+            return positionSensorO,positionSensorO
+        else 
+            #obstacles
+            for (i,j) in oobstacles:
+                positionSensoro.append((x+i,y+j))
+            return positionSensoro
