@@ -1,7 +1,7 @@
 import sys 
 import random
 import tkinter
-from agent import *
+import agent as agt
 random.seed()
 
 #dimension de la grille
@@ -15,7 +15,7 @@ class State:
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
-        self.agent = Agent(13,12, 40)
+        self.agent = agt.Agent(13,12, 40)
         for i in range(15):
             x = random.randint(0,24)
             y = random.randint(0,24)
