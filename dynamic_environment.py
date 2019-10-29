@@ -31,7 +31,7 @@ class State:
         return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in self.ennemies) and self.environment[x][y]!=1
     
     def remaining_energy(self):
-        return self.energy
+        return self.agent.remaining_energy()
     
     #------------- fonction pour tester une case
     
@@ -167,9 +167,17 @@ class State:
                 elif self.environment[i][j]==2:
                     self.can.create_text(centre, text = "$")
                 elif self.environment[i][j] == 1:
-                    self.can.create_text(centre, text = "O")  
-                        
+                    self.can.create_text(centre, text = "O") 
+        
+        #create the HP bar in the bottom
+        self.life = []  # all rectangle for the life 
 
+        self.can_life=tkinter.Canvas(self.grille,bg="light gray",height=25, width=200)
+        self.can_life.pack(side = "left") 
+
+        for i in range(1,200,25): 
+            self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))           
+                        
     def moveAgent(self):
         
         direction = random.randint(0,3)
