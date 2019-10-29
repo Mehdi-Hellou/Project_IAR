@@ -39,7 +39,19 @@ class Agent(object):
     def remaining_energy(self):
         return self.energy
     
-    
+    def setEnergy(self,value):
+        self.energy += value
+        
+        if self.remaining_energy() < 0: 
+            print("Game Over")
+        
+    def updateEnergy(self,canvas, energy_bar):
+        energy = self.remaining_energy()
+        print(energy)
+        if energy%5 == 0: 
+            canvas.delete(energy_bar[-1])
+            energy_bar.pop()
+
     def move(self, direction): 
         # Bouger vers le Nord 
         if direction == 0: 
@@ -132,7 +144,6 @@ class Agent(object):
             k-=1
 
         return positionObstacle
-
 
         def debugSensor(self, state, type): 
              result=[]

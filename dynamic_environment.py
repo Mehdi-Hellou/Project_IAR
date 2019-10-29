@@ -205,8 +205,10 @@ class State:
                 self.can.move(self.agentText, self.PAS, 0)
         
         self.agent.sensors(self)
-
-        #self.grille.after(3000,self.moveAgent)    # Suscribe to make move again the agent each second
+        
+        self.agent.setEnergy(-1)
+        self.agent.updateEnergy(self.can_life,self.life)
+        self.grille.after(1000,self.moveAgent)    # Suscribe to make move again the agent each second
 
     def update(self):
         self.print_grid_line()
