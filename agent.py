@@ -160,11 +160,7 @@ class Agent(object):
             for (i,j) in Xennemies:
                 positionSensorX.append((x+i,y+j))
             return positionSensorO,positionSensorO
-<<<<<<< HEAD
-        else:
-=======
         else :
->>>>>>> a74691f6c4faee4d2bdb67489a3bb9716c1c1303
             #obstacles
             for (i,j) in oobstacles:
                 positionSensoro.append((x+i,y+j))
