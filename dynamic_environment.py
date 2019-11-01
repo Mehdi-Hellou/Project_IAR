@@ -25,6 +25,8 @@ class State:
             self.environment[x][y] =2
 
         self.energy=40
+
+        self.end = False 
         return
     
     def is_empty(self,x,y):
@@ -113,22 +115,6 @@ class State:
 
         #to_print.mainloop()
 
-    def print_grid_terminal(self):
-        for i in range(25):
-            l = ""
-            for j in range(25):
-                if (i,j) in self.ennemies:
-                    l += "E"
-                elif (i,j)==self.agent.getPosition():
-                    l+= "I"
-                elif self.environment[i][j]==2:
-                    l+="$"
-                elif self.environment[i][j] == 1:
-                    l+="O"
-                else:
-                    l+=" "
-            print(l)
-
     def print_grid_line(self):
         windows_Size=800
         self.grille = tkinter.Tk()
@@ -138,9 +124,6 @@ class State:
         self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fenetre ainsi que la taille de notre grillage dans la simulation 
 
         X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
-        
-        # For debug part, return the position of the sensor into the grid according the agent position
-        #sensorsY, sensorsO, sensorsX = self.agent.sensors(self)
         
         self.Opatch(2,self.agent.x, self.agent.y)
         for i in range(25): 
@@ -188,7 +171,8 @@ class State:
         x, y = self.agent.getPosition()
 
         if self.lookupObstacles(x,y): 
-            self.agent.setPosition(previousX, previousY)
+            x, y = previousX, previousY
+            self.agent.setPosition(x, y)
 
         else:
             # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers le Norde
@@ -205,8 +189,13 @@ class State:
                 self.can.move(self.agentText, self.PAS, 0)
         
         self.agent.sensors(self)
-        
-        self.agent.setEnergy(-1)
+
+        if(lookupEnnemies(x,y)): 
+            self.end = True
+        elif(lookupFood(x,y)):
+            self.setEnergy(15)
+        else: 
+            self.setEnergy(-1)
         self.agent.updateEnergy(self.can_life,self.life)
         self.grille.after(1000,self.moveAgent)    # Suscribe to make move again the agent each second
 

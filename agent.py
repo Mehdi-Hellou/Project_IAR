@@ -40,14 +40,20 @@ class Agent(object):
         return self.energy
     
     def setEnergy(self,value):
-        self.energy += value
+
+        if (self.energy + value) > 40: 
+            self.energy = 40
+        else :
+            self.energy += value
         
         if self.remaining_energy() < 0: 
             print("Game Over")
+
+
         
     def updateEnergy(self,canvas, energy_bar):
         energy = self.remaining_energy()
-        print(energy)
+        
         if energy%5 == 0: 
             canvas.delete(energy_bar[-1])
             energy_bar.pop()
@@ -81,12 +87,6 @@ class Agent(object):
         #return the vector of detection
         result=[]
         (x,y)=state.agent.getPosition()
-
-        #List for debug and see if the sensors are well-made 
-        """positionSensorY = []
-        positionSensorX = []
-        positionSensorO = []
-        positionSensoro = []"""
 
         #food
         for (i,j) in Yfood:
