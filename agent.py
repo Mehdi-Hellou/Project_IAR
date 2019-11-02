@@ -60,21 +60,21 @@ class Agent(object):
 
     def move(self, direction): 
         # Bouger vers le Nord 
-        if direction == 0: 
+        if direction == 3: 
             self.y = self.y - 1
-            print("Nord !")
+            #print("Nord !")
         # Bouger vers l'Ouest
-        elif direction == 1: 
-            self.x = self.x - 1
-            print("Ouest !")
-        # Bouger vers le Sud
         elif direction == 2: 
+            self.x = self.x - 1
+            #print("Ouest !")
+        # Bouger vers le Sud
+        elif direction == 1: 
             self.y = self.y + 1
-            print("Sud !") 
+            #print("Sud !") 
         # Bouger vers l'Est
-        elif direction == 3: 
+        elif direction == 0: 
             self.x = self.x + 1
-            print("Est !")
+            #print("Est !")
 
     def getPosition(self): 
         return (self.x, self.y)

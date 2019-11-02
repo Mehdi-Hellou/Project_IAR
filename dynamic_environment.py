@@ -2,6 +2,8 @@ import sys
 import random
 import tkinter
 import agent as agt
+from ennemy import Ennemy
+
 random.seed()
 
 #dimension de la grille
@@ -14,7 +16,7 @@ class State:
         #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely)
         for (x,y) in obstacles:
             self.environment[x][y] = 1
-        self.ennemies = [(6,6), (12,2),(12,6),(18,6)]
+        self.ennemies = [Ennemy(6,6), Ennemy(12,2), Ennemy(12,6), Ennemy(18,6)]
         self.agent = agt.Agent(13,12, 40)
         for i in range(15):
             x = random.randint(0,24)
@@ -30,7 +32,7 @@ class State:
         return
     
     def is_empty(self,x,y):
-        return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in self.ennemies) and self.environment[x][y]!=1
+        return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in [i.getPosition() for i in self.ennemies]) and self.environment[x][y]!=1
     
     def remaining_energy(self):
         return self.agent.remaining_energy()
@@ -58,7 +60,7 @@ class State:
     def lookupEnnemies(self, x, y):
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
-        if (x,y) in self.ennemies:
+        if (x,y) in [i.getPosition() for i in self.ennemies]:
             #print("An ennemiy !!! ")
             return True
         else:
@@ -102,7 +104,7 @@ class State:
         for i in range(25):
             for j in range(25):         
                 case = tkinter.Canvas(to_print, height=25, width=25,  bg="white").grid(row=i, column=j)       
-                if (i,j) in self.ennemies:
+                if (i,j) in [i.getPosition() for i in self.ennemies]:
                     l = tkinter.Label(case, text = "E", borderwidth=1, fg='blue', bg="white").grid(row=i, column=j)
                 elif (i,j)==self.agent.getPosition():
                     l = tkinter.Label(case, text = "I", borderwidth=1, fg='red', bg="white").grid(row=i, column=j)
@@ -126,6 +128,7 @@ class State:
         X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
         
         self.Opatch(2,self.agent.x, self.agent.y)
+        self.ennemyText = []
         for i in range(25): 
             self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on cree manuellement des lignes horizontales  
             self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on cree manuellement des lignes verticales 
@@ -144,8 +147,8 @@ class State:
                 if (i,j)==self.agent.getPosition():
                     self.agentText = self.can.create_text(centre, text = "I")
                 
-                elif (i,j) in self.ennemies:
-                    self.ennemieText = self.can.create_text(centre, text = "E")
+                elif (i,j) in [i.getPosition() for i in self.ennemies]:
+                    self.ennemyText.append(self.can.create_text(centre, text = "E"))
                 
                 elif self.environment[i][j]==2:
                     self.can.create_text(centre, text = "$")
@@ -175,34 +178,55 @@ class State:
             self.agent.setPosition(x, y)
 
         else:
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers le Norde
-            if direction == 0: 
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers le Nord
+            if direction == 3: 
                 self.can.move(self.agentText, 0, -self.PAS)
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers l'Ouest
-            elif direction == 1: 
-                self.can.move(self.agentText, -self.PAS, 0)
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers le Sud
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers l'Ouest
             elif direction == 2: 
+                self.can.move(self.agentText, -self.PAS, 0)
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers le Sud
+            elif direction == 1: 
                 self.can.move(self.agentText, 0, self.PAS)
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent vers l'Est
-            elif direction == 3: 
+            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers l'Est
+            elif direction == 0: 
                 self.can.move(self.agentText, self.PAS, 0)
         
         self.agent.sensors(self)
 
-        if(lookupEnnemies(x,y)): 
+        if self.lookupEnnemies(x,y): 
             self.end = True
-        elif(lookupFood(x,y)):
-            self.setEnergy(15)
+
+        elif self.lookupFood(x,y):
+            self.agent.setEnergy(15)
+
         else: 
-            self.setEnergy(-1)
+            self.agent.setEnergy(-1)
+
         self.agent.updateEnergy(self.can_life,self.life)
         self.grille.after(1000,self.moveAgent)    # Suscribe to make move again the agent each second
+
+    def moveEnnemy(self):
+        """
+        Function to make move the ennemie
+        """
+        for i,ennemy in enumerate(self.ennemies):
+
+            r = random.uniform(0,1)
+            if r > 0.2 : 
+                ennemy.strategy(self, self.can, self.ennemyText[i], self.PAS)
+                
+        """r = random.uniform(0,1)
+        if r > 0.2 : 
+            self.ennemies[1].strategy(self, self.can, self.ennemyText[1], self.PAS)"""
+        self.grille.after(3000, self.moveEnnemy)
+
 
     def update(self):
         self.print_grid_line()
 
+
         self.grille.after(1000,self.moveAgent)  # Suscribe to make move the agent 
+        self.grille.after(3000, self.moveEnnemy)
         self.grille.mainloop()
 
 if __name__ == '__main__':
