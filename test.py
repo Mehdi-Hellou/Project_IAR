@@ -1,9 +1,8 @@
 
-
 import unittest
 import agent
 import dynamic_environment as env
-
+from ennemy import Ennemy
 
 class testState(unittest.TestCase):
     
@@ -23,7 +22,7 @@ class testState(unittest.TestCase):
                     
     def testEnnemyLookUp(self):
         testgrid= env.State([])
-        testgrid.ennemies=([(5,5), (-1,-1)])
+        testgrid.ennemies=([Ennemy(5,5), Ennemy(-1,-1)])
         for i in range(-1, env.width+1, 1):
             for j in range(-1, env.heigth+1, 1):
                 if i==5 and j==5:
@@ -53,7 +52,7 @@ class testState(unittest.TestCase):
             for j in range(env.heigth):
                 testgrid.environment[i][j]=0
         testgrid.environment[10][10]=2
-        testgrid.ennemies=([(5,5), (-1,0)])
+        testgrid.ennemies=([Ennemy(5,5), Ennemy(-1,0)])
         for i in range(-1, env.width+1, 1):
             for j in range(-1, env.heigth+1, 1):
                 if (i==5 and j==5) or (i==4 and j==5) or (i==5 and j==4) or (i==6 and j==5) or (i==5 and j==6):
@@ -72,7 +71,7 @@ class testState(unittest.TestCase):
             for j in range(env.heigth):
                 testgrid.environment[i][j]=0
         testgrid.environment[10][10]=2
-        testgrid.ennemies=([(5,5), (-1,0)])
+        testgrid.ennemies=([Ennemy(5,5), Ennemy(-1,0)])
         for i in range(-1, env.width+1, 1):
             for j in range(-1, env.heigth+1, 1):
                 if (i==5 and j==5) or (i==4 and j==5) or (i==5 and j==4) or (i==6 and j==5) or (i==5 and j==6) or (i==4 and j==4) or (i==4 and j==6) or (i==6 and j==6) or (i==6 and j==4):

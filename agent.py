@@ -49,32 +49,46 @@ class Agent(object):
         if self.remaining_energy() < 0: 
             print("Game Over")
 
-
         
     def updateEnergy(self,canvas, energy_bar):
         energy = self.remaining_energy()
-        
+        print(energy)        
         if energy%5 == 0: 
             canvas.delete(energy_bar[-1])
             energy_bar.pop()
 
-    def move(self, direction): 
+    def move(self, direction,state,canvas, agentText, pas): 
+        x,y = self.getPosition()
         # Bouger vers le Nord 
         if direction == 3: 
-            self.y = self.y - 1
+            if state.lookupObstacles(x, y-1)==False:
+                y = y - 1
+                canvas.move(agentText, 0, -pas)
+
             #print("Nord !")
         # Bouger vers l'Ouest
         elif direction == 2: 
-            self.x = self.x - 1
+            if state.lookupObstacles(x - 1 ,y)==False:
+                x = x - 1
+                canvas.move(agentText, -pas, 0)
+
             #print("Ouest !")
         # Bouger vers le Sud
         elif direction == 1: 
-            self.y = self.y + 1
+            if state.lookupObstacles(x , y + 1)==False:
+                y = y + 1
+                canvas.move(agentText, 0, pas)
+
             #print("Sud !") 
         # Bouger vers l'Est
         elif direction == 0: 
-            self.x = self.x + 1
+            if state.lookupObstacles(x + 1 ,y)==False:
+                x = x + 1
+                canvas.move(agentText, pas, 0)
+
             #print("Est !")
+
+        return x,y
 
     def getPosition(self): 
         return (self.x, self.y)
@@ -111,6 +125,12 @@ class Agent(object):
         return result
         #return positionSensorY, positionSensorO, positionSensorX
             
+    def policy(self, state, canvas, agentText, pas):
+        direction = random.randint(0,3)
+
+        x,y = self.move(direction,state, canvas, agentText, pas)
+        self.setPosition(x,y)
+
 
     def sensorObstacle(self,state): 
         positionObstacle = []   # List of position of obstacle in function of position of agent 

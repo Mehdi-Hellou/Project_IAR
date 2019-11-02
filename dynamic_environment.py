@@ -58,9 +58,11 @@ class State:
             return False
     
     def lookupEnnemies(self, x, y):
+        positionEnnemies = [i.getPosition() for i in self.ennemies]
+
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
-        if (x,y) in [i.getPosition() for i in self.ennemies]:
+        if (x,y) in positionEnnemies:
             #print("An ennemiy !!! ")
             return True
         else:
@@ -165,33 +167,11 @@ class State:
             self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))           
                         
     def moveAgent(self):
-        
-        direction = random.randint(0,3)
-        previousX, previousY = self.agent.getPosition()
 
-        self.agent.move(direction)
-
-        x, y = self.agent.getPosition()
-
-        if self.lookupObstacles(x,y): 
-            x, y = previousX, previousY
-            self.agent.setPosition(x, y)
-
-        else:
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers le Nord
-            if direction == 3: 
-                self.can.move(self.agentText, 0, -self.PAS)
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers l'Ouest
-            elif direction == 2: 
-                self.can.move(self.agentText, -self.PAS, 0)
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers le Sud
-            elif direction == 1: 
-                self.can.move(self.agentText, 0, self.PAS)
-            # Faire bouger l'agent dans la fenêtre Tkinter quand l'agent va vers l'Est
-            elif direction == 0: 
-                self.can.move(self.agentText, self.PAS, 0)
-        
+        self.agent.policy(self, self.can, self.agentText, self.PAS)
         self.agent.sensors(self)
+
+        x,y = self.agent.getPosition()
 
         if self.lookupEnnemies(x,y): 
             self.end = True
@@ -203,30 +183,30 @@ class State:
             self.agent.setEnergy(-1)
 
         self.agent.updateEnergy(self.can_life,self.life)
-        self.grille.after(1000,self.moveAgent)    # Suscribe to make move again the agent each second
+        self.grille.after(1000,self.moveAgent)    # Resubscribe to make move again the agent each second
 
     def moveEnnemy(self):
         """
-        Function to make move the ennemie
+        Function to make move the ennemies
         """
         for i,ennemy in enumerate(self.ennemies):
 
             r = random.uniform(0,1)
             if r > 0.2 : 
                 ennemy.strategy(self, self.can, self.ennemyText[i], self.PAS)
-                
+
         """r = random.uniform(0,1)
         if r > 0.2 : 
             self.ennemies[1].strategy(self, self.can, self.ennemyText[1], self.PAS)"""
-        self.grille.after(3000, self.moveEnnemy)
+        self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the agent each second
 
 
     def update(self):
         self.print_grid_line()
 
 
-        self.grille.after(1000,self.moveAgent)  # Suscribe to make move the agent 
-        self.grille.after(3000, self.moveEnnemy)
+        self.grille.after(1000,self.moveAgent)  # Subscribe to make move the agent 
+        self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
         self.grille.mainloop()
 
 if __name__ == '__main__':
