@@ -19,8 +19,8 @@ class State:
         self.ennemies = [Ennemy(6,6), Ennemy(12,2), Ennemy(12,6), Ennemy(18,6)]
         self.agent = agt.Agent(13,12, 40)
         for i in range(15):
-            x = random.randint(0,24)
-            y = random.randint(0,24)
+            x = random.randint(12,16)
+            y = random.randint(12,16)
             while not self.is_empty(x,y):
                 x = random.randint(0,24)
                 y = random.randint(0,24)
@@ -167,7 +167,7 @@ class State:
             self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))           
                         
     def moveAgent(self):
-
+        getFood = False # boolean to know if the move of agent allowed him to get food or not 
         self.agent.policy(self, self.can, self.agentText, self.PAS)
         self.agent.sensors(self)
 
@@ -178,11 +178,11 @@ class State:
 
         elif self.lookupFood(x,y):
             self.agent.setEnergy(15)
-
+            getFood = True
         else: 
             self.agent.setEnergy(-1)
 
-        self.agent.updateEnergy(self.can_life,self.life)
+        self.agent.updateEnergy(self.can_life,self.life, getFood)
         self.grille.after(1000,self.moveAgent)    # Resubscribe to make move again the agent each second
 
     def moveEnnemy(self):
@@ -206,7 +206,7 @@ class State:
 
 
         self.grille.after(1000,self.moveAgent)  # Subscribe to make move the agent 
-        self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
+        #self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
         self.grille.mainloop()
 
 if __name__ == '__main__':

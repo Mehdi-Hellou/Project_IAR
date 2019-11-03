@@ -2,6 +2,7 @@ import sys
 import random
 import tkinter
 import dynamic_environment
+import math
 
 #list des positions des patch dans le senseurs
 
@@ -50,10 +51,23 @@ class Agent(object):
             print("Game Over")
 
         
-    def updateEnergy(self,canvas, energy_bar):
+    def updateEnergy(self,canvas, energy_bar, getFood):
+        """
+        canvas : the canvas where the health bar is located 
+        energy_bar : the list of eight rectangles which represented the energy level of the agent
+        getFood :  boolean values ot indicate if the agent get the food or not during the current move
+        """
         energy = self.remaining_energy()
-        print(energy)        
-        if energy%5 == 0: 
+        print(energy)   
+
+        if getFood:  # if the agent get the food
+            length = math.ceil(energy/5)  # we took the lenght corresponding to the upper round of the nergy bar divide by 5
+
+            for i in range ( len(energy_bar), length): 
+                x_index = i * 25 + 1
+                energy_bar.append(canvas.create_rectangle(x_index, 0, x_index + 25, 25, fill="red", width = 0.5))
+
+        elif energy%5 == 0: 
             canvas.delete(energy_bar[-1])
             energy_bar.pop()
 
