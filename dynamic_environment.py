@@ -131,6 +131,7 @@ class State:
         
         self.Opatch(2,self.agent.x, self.agent.y)
         self.ennemyText = []
+        self.foodText = {}
         for i in range(25): 
             self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on cree manuellement des lignes horizontales  
             self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on cree manuellement des lignes verticales 
@@ -138,14 +139,6 @@ class State:
             for j in range(25):         
                 centre = (X0+i*self.PAS, Y0+j*self.PAS) 
 
-                # Part to write the sensors shape for debug 
-                """if (i,j) in sensorsY: 
-                    self.can.create_text(centre, text = "Y")
-                elif (i,j) in sensorsO: 
-                    self.can.create_text(centre, text = "O")
-                elif (i,j) in sensorsX: 
-                    self.can.create_text(centre, text = "X")"""
-                
                 if (i,j)==self.agent.getPosition():
                     self.agentText = self.can.create_text(centre, text = "I")
                 
@@ -153,7 +146,8 @@ class State:
                     self.ennemyText.append(self.can.create_text(centre, text = "E"))
                 
                 elif self.environment[i][j]==2:
-                    self.can.create_text(centre, text = "$")
+                    self.foodText[(i,j)] = self.can.create_text(centre, text = "$")
+
                 elif self.environment[i][j] == 1:
                     self.can.create_text(centre, text = "O") 
         
@@ -178,7 +172,9 @@ class State:
 
         elif self.lookupFood(x,y):
             self.agent.setEnergy(15)
+            self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
             getFood = True
+            
         else: 
             self.agent.setEnergy(-1)
 
