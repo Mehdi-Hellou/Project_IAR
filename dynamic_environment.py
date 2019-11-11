@@ -210,15 +210,15 @@ class State:
 
     def update(self):
 
-        self.update_input()
+        self.learning()# update the neural_network 
         self.moveAgent()  # Subscribe to make move the agent 
 
-    def update_input(self): 
+    def learning(self): 
+        # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
         input_nn = np.concatenate((self.sensors_result, \
                 np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) ))
 
-        output = self.nn.predict(input_nn)
-        print(output)
+        output = self.nn.predict(input_nn)  # Prediction of the neural network 
 
 if __name__ == '__main__':
     

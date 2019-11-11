@@ -55,6 +55,8 @@ class Agent(object):
         # We set the coarse coding of the agent's energy for the neural network
         len_now = int(self.energy//2.5) 
         self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
+        print(self.coarseEnergy)
+        return 
 
     def get_energy_coarsed(self): 
         return self.coarseEnergy

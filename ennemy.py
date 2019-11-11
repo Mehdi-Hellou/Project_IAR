@@ -38,22 +38,22 @@ class Ennemy(object):
         # Bouger vers le Nord 
         if direction == 3: 
             canvas.move(ennemyText, 0, -pas)
-            print("Nord!!")
+            #print("Nord!!")
             
         # Bouger vers l'Ouest
         elif direction == 2:
             canvas.move(ennemyText, -pas, 0)
-            print("West!!")
+            #print("West!!")
 
         # Bouger vers le Sud
         elif direction == 1: 
             canvas.move(ennemyText, 0, pas)
-            print("Sud!!")
+            #print("Sud!!")
 
         # Bouger vers l'Est
         elif direction == 0: 
             canvas.move(ennemyText, pas, 0)
-            print("Est!!")
+            #print("Est!!")
 
     def getPosition(self): 
         return (self.x, self.y)
