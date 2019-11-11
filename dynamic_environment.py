@@ -3,6 +3,7 @@ import random
 import tkinter
 import agent as agt
 from ennemy import Ennemy
+from neural_network import *
 
 random.seed()
 
@@ -19,8 +20,8 @@ class State:
         self.ennemies = [Ennemy(6,6), Ennemy(12,2), Ennemy(12,6), Ennemy(18,6)]
         self.agent = agt.Agent(13,12, 40)
         for i in range(15):
-            x = random.randint(12,16)
-            y = random.randint(12,16)
+            x = random.randint(0,24)
+            y = random.randint(0,24)
             while not self.is_empty(x,y):
                 x = random.randint(0,24)
                 y = random.randint(0,24)
@@ -29,6 +30,8 @@ class State:
         self.energy=40
 
         self.end = False 
+        self.nn = NeuralNetwork(5)  # the neural network used for the learning 
+
         return
     
     def is_empty(self,x,y):
@@ -163,23 +166,26 @@ class State:
     def moveAgent(self):
         getFood = False # boolean to know if the move of agent allowed him to get food or not 
         self.agent.policy(self, self.can, self.agentText, self.PAS)
-        self.agent.sensors(self)
+        self.sensors_result = np.asarray(self.agent.sensors(self)).astype(int)
 
         x,y = self.agent.getPosition()
 
         if self.lookupEnnemies(x,y): 
+            self.agent.reward = -1.0
             self.end = True
 
         elif self.lookupFood(x,y):
             self.agent.setEnergy(15)
+            self.agent.reward = 0.4
             self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
             getFood = True
             
         else: 
+            self.agent.reward = 0.0
             self.agent.setEnergy(-1)
 
         self.agent.updateEnergy(self.can_life,self.life, getFood)
-        self.grille.after(1000,self.moveAgent)    # Resubscribe to make move again the agent each second
+        self.grille.after(1000,self.update)    # Resubscribe to make move again the agent each second
 
     def moveEnnemy(self):
         """
@@ -194,16 +200,25 @@ class State:
         """r = random.uniform(0,1)
         if r > 0.2 : 
             self.ennemies[1].strategy(self, self.can, self.ennemyText[1], self.PAS)"""
-        self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the agent each second
+        self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
+    def initiate_simulation(self): 
+        self.print_grid_line()
+        self.grille.after(1000,self.moveAgent)  # Subscribe to make move the agent
+        self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
+        self.grille.mainloop()
 
     def update(self):
-        self.print_grid_line()
 
+        self.update_input()
+        self.moveAgent()  # Subscribe to make move the agent 
 
-        self.grille.after(1000,self.moveAgent)  # Subscribe to make move the agent 
-        #self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
-        self.grille.mainloop()
+    def update_input(self): 
+        input_nn = np.concatenate((self.sensors_result, \
+                np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) ))
+
+        output = self.nn.predict(input_nn)
+        print(output)
 
 if __name__ == '__main__':
     
@@ -232,7 +247,6 @@ if __name__ == '__main__':
     obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
 
     test= State(obstacles)
-
-    test.update()
+    test.initiate_simulation()
 
     

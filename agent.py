@@ -34,8 +34,11 @@ class Agent(object):
         self.x = x 
         self.y = y
         self.energy = energy
+        self.coarseEnergy = [1 for i in range(16)]   # the coarse coding of the energy for the Neural Network 
+        self.previousAction = [-1 for i in range(4)] # the 4 previous actions made by the agent 
+        self.previous_collision = False # if the agent collide with an obstacle in the previous
+        self.reward = 0.0
         return
-    
 
     def remaining_energy(self):
         return self.energy
@@ -49,8 +52,19 @@ class Agent(object):
         
         if self.remaining_energy() < 0: 
             print("Game Over")
+        # We set the coarse coding of the agent's energy for the neural network
+        len_now = int(self.energy//2.5) 
+        self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
 
-        
+    def get_energy_coarsed(self): 
+        return self.coarseEnergy
+
+    def get_previousAction(self): 
+        return self.previousAction
+
+    def get_previous_collision(self): 
+        return self.previous_collision
+         
     def updateEnergy(self,canvas, energy_bar, getFood):
         """
         canvas : the canvas where the health bar is located 
@@ -58,10 +72,9 @@ class Agent(object):
         getFood :  boolean values ot indicate if the agent get the food or not during the current move
         """
         energy = self.remaining_energy()
-        print(energy)   
-
+        print(energy)
         if getFood:  # if the agent get the food
-            length = math.ceil(energy/5)  # we took the lenght corresponding to the upper round of the nergy bar divide by 5
+            length = math.ceil(energy/5)  # we took the lenght corresponding to the upper round of the energy bar divide by 5
 
             for i in range ( len(energy_bar), length): 
                 x_index = i * 25 + 1
@@ -78,6 +91,9 @@ class Agent(object):
             if state.lookupObstacles(x, y-1)==False:
                 y = y - 1
                 canvas.move(agentText, 0, -pas)
+                self.previous_collision = False
+            else:
+                self.previous_collision = True
 
             #print("Nord !")
         # Bouger vers l'Ouest
@@ -85,6 +101,9 @@ class Agent(object):
             if state.lookupObstacles(x - 1 ,y)==False:
                 x = x - 1
                 canvas.move(agentText, -pas, 0)
+                self.previous_collision = False
+            else:
+                self.previous_collision = True
 
             #print("Ouest !")
         # Bouger vers le Sud
@@ -92,6 +111,9 @@ class Agent(object):
             if state.lookupObstacles(x , y + 1)==False:
                 y = y + 1
                 canvas.move(agentText, 0, pas)
+                self.previous_collision = False
+            else:
+                self.previous_collision = True
 
             #print("Sud !") 
         # Bouger vers l'Est
@@ -99,6 +121,9 @@ class Agent(object):
             if state.lookupObstacles(x + 1 ,y)==False:
                 x = x + 1
                 canvas.move(agentText, pas, 0)
+                self.previous_collision = False
+            else:
+                self.previous_collision = True
 
             #print("Est !")
 
@@ -144,6 +169,10 @@ class Agent(object):
 
         x,y = self.move(direction,state, canvas, agentText, pas)
         self.setPosition(x,y)
+      
+        self.previousAction.pop(0) # we remove the first element of the list since we only record the 4 previous actions 
+        self.previousAction.append(direction)  # we add the new direction to the list of previous ones 
+
 
 
     def sensorObstacle(self,state): 
