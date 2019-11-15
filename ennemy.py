@@ -6,36 +6,51 @@ import numpy as np
 
 class Ennemy(object):
     """docstring for Ennemy"""
-    def __init__(self, x, y):
+    def __init__(self, x, y, environment):
         super(Ennemy, self).__init__()
         self.y = y
         self.x = x
+        self.environment = environment
 
-    def move(self, direction, state):
+    def move(self, direction, canvas, ennemyText, pas):
+        """
+        direction : direction of the movement (Est,West,North,South)
+        state : the environment of dynamic  
+        """
         x,y = self.getPosition() 
         # Bouger vers le Nord 
         if direction == 3: 
-            if state.lookupObstacles(x, y - 1)==False: 
+            if self.environment.lookupObstacles(x, y - 1)==False: 
                 y = y - 1
-            
+                if canvas != None: 
+                    canvas.move(ennemyText, 0, -pas)
         # Bouger vers l'Ouest
         elif direction == 2:
-            if state.lookupObstacles(x - 1 ,y)==False: 
-                x = x - 1 
-            
+            if self.environment.lookupObstacles(x - 1 ,y)==False: 
+                x = x - 1
+                if canvas != None:
+                    canvas.move(ennemyText, -pas, 0)            
         # Bouger vers le Sud
         elif direction == 1: 
-            if state.lookupObstacles(x,y + 1)==False:
+            if self.environment.lookupObstacles(x,y + 1)==False:
                 y = y + 1
+                if canvas != None: 
+                    canvas.move(ennemyText, 0, pas)
         # Bouger vers l'Est
         elif direction == 0: 
-            if state.lookupObstacles(x + 1,y)==False:
+            if self.environment.lookupObstacles(x + 1,y)==False:
                 x = x + 1
+                if canvas !=  None: 
+                    canvas.move(ennemyText, pas, 0)
         
         return x,y
 
-    def updateCanvasText(self, direction, canvas, ennemyText, pas): 
-        # Bouger vers le Nord 
+    #def updateCanvasText(self, direction, canvas, ennemyText, pas): 
+        """canvas : the grid of the simulated environment 
+        ennemyText : the text that indicates the ennemy position in the canvas
+        pas : the step between each case of the grid to move physically the ennemy into it 
+        """
+        """# Bouger vers le Nord 
         if direction == 3: 
             canvas.move(ennemyText, 0, -pas)
             #print("Nord!!")
@@ -53,7 +68,7 @@ class Ennemy(object):
         # Bouger vers l'Est
         elif direction == 0: 
             canvas.move(ennemyText, pas, 0)
-            #print("Est!!")
+            #print("Est!!")"""
 
     def getPosition(self): 
         return (self.x, self.y)
@@ -62,7 +77,7 @@ class Ennemy(object):
         self.x = x
         self.y = y
             
-    def strategy(self, state, canvas, ennemyText, pas): 
+    def strategy(self, canvas, ennemyText, pas): 
         """
         The strategy of the ennemy for moving into the environnement 
         """
@@ -71,33 +86,33 @@ class Ennemy(object):
         P = [0.0 for i in range(4)]
 
         for p in range(4): 
-            xprime,yprime = self.move(p,state) # the potential ennemy position after have execute the move p
+            xprime,yprime = self.move(p,None, "", 0) # the potential ennemy position after have execute the move p
 
             if x==xprime and y==yprime:  # if the movement result in a collision with an obstacle 
                 P[p] = 0.0
             else:                      
-                P[p] = np.exp(0.33 * self.W_angle(state,p) * self.T_dist(state))  
+                P[p] = np.exp(0.33 * self.W_angle(p) * self.T_dist())  
 
         Pa = [i/np.sum(P) for i in P]  # the probability for each action possible
 
         move = np.argmax(Pa)    # we took the one with the best proba
         
-        x,y = self.move(move,state)
+        x,y = self.move(move,canvas, ennemyText, pas)
         self.setPosition(x,y)
-        self.updateCanvasText(move, canvas, ennemyText, pas)
+        #self.updateCanvasText(move, canvas, ennemyText, pas)
 
         
 
-    def W_angle(self,state, move):
+    def W_angle(self, move):
         """
         The fonction for calculating the W angle. 
         Refer to the appendix A for more details.
         """
-        xAgent, yAgent = state.agent.getPosition()
+        xAgent, yAgent = self.environment.agent.getPosition()
 
         x,y = self.getPosition()
 
-        xafter, yafter = self.move(move,state)
+        xafter, yafter = self.move(move, None, "", 0)
 
         u = np.array([xAgent-x, yAgent-y])
         v = np.array([xafter-x, yafter-y])
@@ -109,12 +124,12 @@ class Ennemy(object):
         return (180.0-abs(angle))/180.0 
 
 
-    def T_dist(self, state):
+    def T_dist(self):
         """
         The fonction for calculating the T dist. 
         Refer to the appendix A for more details. 
         """
-        xAgent, yAgent = state.agent.getPosition()
+        xAgent, yAgent = self.environment.agent.getPosition()
 
         x,y = self.getPosition()
 

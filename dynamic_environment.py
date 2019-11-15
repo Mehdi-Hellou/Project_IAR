@@ -11,13 +11,37 @@ random.seed()
 width = 25
 heigth = 25
 
+#poisiton des obstacles 
+obstacles = [] 
+obstacles+= [(0,0), (0,1), (0,2), (0,3), (0,4), (0,5), (0,19), (0,20), (0,21), (0,22), (0,23), (0,24)]
+obstacles+=[(1,0), (1,24)]
+obstacles+=[(2,0),(2,3),(2,4), (2,8), (2,9), (2,11), (2,12), (2,13), (2,15), (2,16), (2,20), (2,21), (2,24)]
+obstacles+=[(3,0), (3,2), (3,3), (3,4), (3,8), (3,9), (3,11), (3,13), (3,15), (3,16), (3,20), (3,21), (3,22), (3,24)]
+obstacles+=[(4,0), (4,2), (4,3), (4,4), (4,20), (4,21), (4,22), (4,24)]
+obstacles+=[(5,0),(5,24)]
+obstacles+=[(8,2),(8,3), (8,8), (8,9), (8,10), (8,11), (8,13), (8,14), (8,15), (8,16), (8,21), (8,22)]
+obstacles+=[(9,2),(9,3), (9,8), (9,9), (9,10), (9,14), (9,15), (9,16), (9,21), (9,22)]
+obstacles+=[(10,8), (10,9), (10,15), (10,16)]
+obstacles+=[(11,2),(11,3), (11,8), (11,16), (11,21), (11,22)]
+obstacles+=[(12,3), (12,12), (12,22)]
+obstacles+= [(24,0), (24,1), (24,2), (24,3), (24,4), (24,5), (24,19), (24,20), (24,21), (24,22), (24,23), (24,24)]
+obstacles+=[(23,0), (23,24)]
+obstacles+=[(22,0),(22,3),(22,4), (22,8), (22,9), (22,11), (22,12), (22,13), (22,15), (22,16), (22,20), (22,21), (22,24)]
+obstacles+=[(21,0), (21,2), (21,3), (21,4), (21,8), (21,9), (21,11), (21,13), (21,15), (21,16), (21,20), (21,21), (21,22), (21,24)]
+obstacles+=[(20,0), (20,2), (20,3), (20,4), (20,20), (20,21), (20,22), (20,24)]
+obstacles+=[(19,0),(19,24)]
+obstacles+=[(16,2),(16,3), (16,8), (16,9), (16,10), (16,11), (16,13), (16,14), (16,15), (16,16), (16,21), (16,22)]
+obstacles+=[(15,2),(15,3), (15,8), (15,9), (15,10), (15,14), (15,15), (15,16), (15,21), (15,22)]
+obstacles+=[(14,8), (14,9), (14,15), (14,16)]
+obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
+
 class State:
-    def __init__(self, obstacles):
+    def __init__(self, obstacles, nn):
         self.environment = [[ 0 for j in range(25)] for i in range(25)]
         #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely)
         for (x,y) in obstacles:
             self.environment[x][y] = 1
-        self.ennemies = [Ennemy(6,6), Ennemy(12,2), Ennemy(12,6), Ennemy(18,6)]
+        self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]
         self.agent = agt.Agent(13,12, 40)
         for i in range(15):
             x = random.randint(0,24)
@@ -30,8 +54,8 @@ class State:
         self.energy=40
 
         self.end = False 
-        self.nn = NeuralNetwork(5)  # the neural network used for the learning 
-
+        self.nn = nn  # the neural network used for the learning 
+        self.initiate_simulation()
         return
     
     def is_empty(self,x,y):
@@ -170,9 +194,10 @@ class State:
 
         x,y = self.agent.getPosition()
 
-        if self.lookupEnnemies(x,y): 
+        if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
             self.agent.reward = -1.0
             self.end = True
+            self.restart_simulation()
 
         elif self.lookupFood(x,y):
             self.agent.setEnergy(15)
@@ -195,11 +220,13 @@ class State:
 
             r = random.uniform(0,1)
             if r > 0.2 : 
-                ennemy.strategy(self, self.can, self.ennemyText[i], self.PAS)
+                ennemy.strategy(self.can, self.ennemyText[i], self.PAS)
 
-        """r = random.uniform(0,1)
-        if r > 0.2 : 
-            self.ennemies[1].strategy(self, self.can, self.ennemyText[1], self.PAS)"""
+            if self.agent.getPosition() == ennemy.getPosition(): # if the movement of the ennemy is in the agent's position it is the end of the simulation
+                self.agent.reward = -1.0
+                self.end = True
+                self.restart_simulation()
+
         self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
@@ -209,9 +236,15 @@ class State:
         self.grille.mainloop()
 
     def update(self):
-
+        
         self.learning()# update the neural_network 
         self.moveAgent()  # Subscribe to make move the agent 
+
+    def restart_simulation(self): 
+        self.grille.destroy()
+        State(obstacles, nn)
+        self.__del__()
+
 
     def learning(self): 
         # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
@@ -220,33 +253,14 @@ class State:
 
         output = self.nn.predict(input_nn)  # Prediction of the neural network 
 
+    def __del__(self): 
+        print("object deleted !!")
+
 if __name__ == '__main__':
     
-    #poisiton des obstacles 
-    obstacles = [] 
-    obstacles+= [(0,0), (0,1), (0,2), (0,3), (0,4), (0,5), (0,19), (0,20), (0,21), (0,22), (0,23), (0,24)]
-    obstacles+=[(1,0), (1,24)]
-    obstacles+=[(2,0),(2,3),(2,4), (2,8), (2,9), (2,11), (2,12), (2,13), (2,15), (2,16), (2,20), (2,21), (2,24)]
-    obstacles+=[(3,0), (3,2), (3,3), (3,4), (3,8), (3,9), (3,11), (3,13), (3,15), (3,16), (3,20), (3,21), (3,22), (3,24)]
-    obstacles+=[(4,0), (4,2), (4,3), (4,4), (4,20), (4,21), (4,22), (4,24)]
-    obstacles+=[(5,0),(5,24)]
-    obstacles+=[(8,2),(8,3), (8,8), (8,9), (8,10), (8,11), (8,13), (8,14), (8,15), (8,16), (8,21), (8,22)]
-    obstacles+=[(9,2),(9,3), (9,8), (9,9), (9,10), (9,14), (9,15), (9,16), (9,21), (9,22)]
-    obstacles+=[(10,8), (10,9), (10,15), (10,16)]
-    obstacles+=[(11,2),(11,3), (11,8), (11,16), (11,21), (11,22)]
-    obstacles+=[(12,3), (12,12), (12,22)]
-    obstacles+= [(24,0), (24,1), (24,2), (24,3), (24,4), (24,5), (24,19), (24,20), (24,21), (24,22), (24,23), (24,24)]
-    obstacles+=[(23,0), (23,24)]
-    obstacles+=[(22,0),(22,3),(22,4), (22,8), (22,9), (22,11), (22,12), (22,13), (22,15), (22,16), (22,20), (22,21), (22,24)]
-    obstacles+=[(21,0), (21,2), (21,3), (21,4), (21,8), (21,9), (21,11), (21,13), (21,15), (21,16), (21,20), (21,21), (21,22), (21,24)]
-    obstacles+=[(20,0), (20,2), (20,3), (20,4), (20,20), (20,21), (20,22), (20,24)]
-    obstacles+=[(19,0),(19,24)]
-    obstacles+=[(16,2),(16,3), (16,8), (16,9), (16,10), (16,11), (16,13), (16,14), (16,15), (16,16), (16,21), (16,22)]
-    obstacles+=[(15,2),(15,3), (15,8), (15,9), (15,10), (15,14), (15,15), (15,16), (15,21), (15,22)]
-    obstacles+=[(14,8), (14,9), (14,15), (14,16)]
-    obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
+    nn = NeuralNetwork(5)  # the neural network used for the learning
 
-    test= State(obstacles)
-    test.initiate_simulation()
+    test= State(obstacles, nn)
+    
 
     

@@ -74,7 +74,7 @@ class Agent(object):
         getFood :  boolean values ot indicate if the agent get the food or not during the current move
         """
         energy = self.remaining_energy()
-        print(energy)
+        #print(energy)
         if getFood:  # if the agent get the food
             length = math.ceil(energy/5)  # we took the lenght corresponding to the upper round of the energy bar divide by 5
 
