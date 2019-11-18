@@ -20,9 +20,32 @@ class NeuralNetwork(object):
 
 		self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid))
 
+		self.optimizer = tf.keras.optimizers.SGD(learning_rate=0.01)
+		self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+
+
 	def predict(self,x): 
 		x = x.reshape(1,145)
 		return self.model.predict(x)
+
+	def loss(self,y, y0):
+		
+		return self.loss_object(y_true=y, y_pred=y0)
+		#return tf.sum((y - y0))
+
+	def grad(self, Uprime, U):
+		
+		with tf.GradientTape() as tape:
+			loss_value = self.loss(Uprime, U)
+		print(loss_value)
+		return loss_value, tape.gradient(loss_value, self.model.trainable_variables)
+
+
+	def train(self, Uprime, U):
+		loss_value, grads = self.grad(Uprime, U) 
+		self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
+
+
 
 if __name__ == '__main__':
 	model = NeuralNetwork(5)

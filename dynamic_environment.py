@@ -55,6 +55,7 @@ class State:
 
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
+        self.gamma = 0.95  # the parameters for the learning 
         self.initiate_simulation()
         return
     
@@ -248,10 +249,22 @@ class State:
 
     def learning(self): 
         # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
-        input_nn = np.concatenate((self.sensors_result, \
-                np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) ))
+        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
 
-        output = self.nn.predict(input_nn)  # Prediction of the neural network 
+        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
+        sensors_result_O = np.asarray(self.agent.sensors(self,x = -1, y = 0)).astype(int)
+        sensors_result_S = np.asarray(self.agent.sensors(self,x = 0, y = 1)).astype(int)
+        sensors_result_E = np.asarray(self.agent.sensors(self,x = 1, y = 0)).astype(int)
+
+        input_nn_N = np.concatenate((sensors_result_N,input_nn))
+        input_nn_O = np.concatenate((sensors_result_O,input_nn))
+        input_nn_S = np.concatenate((sensors_result_S,input_nn))
+        input_nn_E = np.concatenate((sensors_result_E,input_nn))
+        
+        #output = np.argmax([self.nn.predict(input_nn_E),self.nn.predict(input_nn_S),self.nn.predict(input_nn_O),self.nn.predict(input_nn_N)])  # Prediction of the neural network 
+        output1 = self.nn.predict(input_nn_E)
+        output2 = self.nn.predict(input_nn_S)
+        self.nn.train(output1,output2)
 
     def __del__(self): 
         print("object deleted !!")

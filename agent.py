@@ -138,10 +138,16 @@ class Agent(object):
         self.x = x
         self.y = y
             
-    def sensors(self, state):
+    def sensors(self, state, x = None, y = None):
         #return the vector of detection
         result=[]
-        (x,y)=state.agent.getPosition()
+        
+        if x == None and y == None: 
+            (x,y)=state.agent.getPosition()
+
+        else:
+            x += self.x
+            y += self.y  
 
         #food
         for (i,j) in Yfood:
