@@ -262,9 +262,9 @@ class State:
         input_nn_E = np.concatenate((sensors_result_E,input_nn))
         
         #output = np.argmax([self.nn.predict(input_nn_E),self.nn.predict(input_nn_S),self.nn.predict(input_nn_O),self.nn.predict(input_nn_N)])  # Prediction of the neural network 
-        output1 = self.nn.predict(input_nn_E)
-        output2 = self.nn.predict(input_nn_S)
-        self.nn.train(output1,output2)
+        output1 = self.nn.predict(input_nn_N.reshape(1,145))
+        
+        self.nn._train_one_step(input_nn_E.reshape(1,145),output1)
 
     def __del__(self): 
         print("object deleted !!")
