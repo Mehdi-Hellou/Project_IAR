@@ -347,7 +347,8 @@ class State:
         return self.agent.sensors(self, x = 0, y = -1, environment = env_move_E, positionEnnemies = positionEnnemies)
 
     def actionSelector(self): 
-
+        pass
+        
     def __del__(self): 
         print("object deleted !!")
 
