@@ -56,7 +56,7 @@ class State:
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
         self.gamma = 0.95  # the parameters for the learning
-        self.Temp = 0. # The temperature for the stochastic action selector 
+        self.Temp = 1/40 # The temperature for the stochastic action selector 
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.initiate_simulation()
         return
@@ -209,7 +209,6 @@ class State:
         if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
             self.agent.reward = -1.0
             self.end = True
-            self.backpropagating()
             self.restart_simulation()
 
         elif self.lookupFood(x,y):
@@ -220,7 +219,7 @@ class State:
             
         else: 
             self.agent.reward = 0.0
-            self.agent.setEnergy(-1)
+            self.agent.setEnergy(-1, self)
 
         self.agent.updateEnergy(self.can_life,self.life, getFood)
         self.backpropagating()
@@ -253,6 +252,7 @@ class State:
         self.moveAgent()  # Subscribe to make move the agent 
 
     def restart_simulation(self): 
+        self.backpropagating()
         self.grille.destroy()
         State(obstacles, self.nn)
         self.__del__()
@@ -263,12 +263,13 @@ class State:
         Return the action that maximize the utility and the utiliy given by performing this action
         """
         # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
-        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
+        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [self.agent.get_previous_collision()]) 
 
-        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
-        sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
-        sensors_result_S = np.asarray(self.rotationEnvironment(180)).astype(int)
-        sensors_result_E = np.asarray(self.rotationEnvironment(90)).astype(int)
+        # Get the results from the sensors according the different movement executed by the agent 
+        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1))
+        sensors_result_O = np.asarray(self.rotationEnvironment(270))
+        sensors_result_S = np.asarray(self.rotationEnvironment(180))
+        sensors_result_E = np.asarray(self.rotationEnvironment(90))
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
@@ -277,23 +278,17 @@ class State:
         
         U_list = [self.nn.predict(input_nn_E.reshape(1,145)),self.nn.predict(input_nn_S.reshape(1,145)),\
                 self.nn.predict(input_nn_O.reshape(1,145)),self.nn.predict(input_nn_N.reshape(1,145))]
-        """reward_list = []
-        reward_list.append(self.getReward(self.agent.move_simulated(self,0)))
-        reward_list.append(self.getReward(self.agent.move_simulated(self,1)))
-        reward_list.append(self.getReward(self.agent.move_simulated(self,2)))
-        reward_list.append(self.getReward(self.agent.move_simulated(self,3)))"""
 
         self.U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed     
-        action = self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
-        return action
+        return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
 
     def backpropagating(self): 
         """
         Backpropagate the errors delta U given the previous utility Umax computed during the first step
         and the Utility max given the current state and the different action performed   
         """ 
-        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
-
+        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [self.agent.get_previous_collision()]) 
+        print(self.agent.get_previousAction())
         sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
         sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
         sensors_result_S = np.asarray(self.rotationEnvironment(180)).astype(int)
@@ -347,8 +342,11 @@ class State:
         return self.agent.sensors(self, x = 0, y = -1, environment = env_move_E, positionEnnemies = positionEnnemies)
 
     def actionSelector(self): 
-        pass
-        
+        s = np.sum([np.exp(k/self.Temp) for k in self.U_list])
+
+        action_proba =[np.exp(m/self.Temp)/s for m in self.U_list]
+        return action_proba
+
     def __del__(self): 
         print("object deleted !!")
 

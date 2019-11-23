@@ -44,19 +44,22 @@ class Agent(object):
     def remaining_energy(self):
         return self.energy
     
-    def setEnergy(self,value):
-
+    def setEnergy(self,value, state=None):
+        end = False
         if (self.energy + value) > 40: 
             self.energy = 40
         else :
             self.energy += value
         
         if self.remaining_energy() < 0: 
-            print("Game Over")
+            end = True
         # We set the coarse coding of the agent's energy for the neural network
         len_now = int(self.energy//2.5) 
         self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
-        print(self.coarseEnergy)
+
+        if end and state != None: # if the agent hasn't remained energy  
+            state.restart_simulation()  # we restart the simulation
+        #print(self.coarseEnergy)
         return 
 
     def get_energy_coarsed(self): 
@@ -66,7 +69,10 @@ class Agent(object):
         return self.previousAction
 
     def get_previous_collision(self): 
-        return self.previous_collision
+        if self.previous_collision: 
+            return -1
+        else: 
+            return 1
          
     def updateEnergy(self,canvas, energy_bar, getFood):
         """
@@ -94,9 +100,9 @@ class Agent(object):
             if state.lookupObstacles(x, y-1)==False:
                 y = y - 1
                 canvas.move(agentText, 0, -pas)
-                self.previous_collision = 1
+                self.previous_collision = False
             else:
-                self.previous_collision = 0
+                self.previous_collision = True
 
             #print("Nord !")
         # Bouger vers l'Ouest
@@ -104,9 +110,9 @@ class Agent(object):
             if state.lookupObstacles(x - 1 ,y)==False:
                 x = x - 1
                 canvas.move(agentText, -pas, 0)
-                self.previous_collision = 1
+                self.previous_collision = False
             else:
-                self.previous_collision = 0
+                self.previous_collision = True
 
             #print("Ouest !")
         # Bouger vers le Sud
@@ -114,9 +120,9 @@ class Agent(object):
             if state.lookupObstacles(x , y + 1)==False:
                 y = y + 1
                 canvas.move(agentText, 0, pas)
-                self.previous_collision = 1
+                self.previous_collision = False
             else:
-                self.previous_collision = 0
+                self.previous_collision = True
 
             #print("Sud !") 
         # Bouger vers l'Est
@@ -124,9 +130,9 @@ class Agent(object):
             if state.lookupObstacles(x + 1 ,y)==False:
                 x = x + 1
                 canvas.move(agentText, pas, 0)
-                self.previous_collision = 1
+                self.previous_collision = False
             else:
-                self.previous_collision = 0
+                self.previous_collision = True
 
             #print("Est !")
 
@@ -184,24 +190,42 @@ class Agent(object):
 
         #food
         for (i,j) in Yfood:
-            result.append(state.Ypatch(x+i, y+j, environment, positionEnnemies))
+            if state.Ypatch(x+i, y+j, environment, positionEnnemies):
+                result.append(1)
+            else: 
+                result.append(-1)
             #positionSensorY.append((x+i, y+j))
         for (i,j) in Ofood:
-            result.append(state.Opatch(2, x+i, y+j,environment, positionEnnemies))
+            if state.Opatch(2, x+i, y+j,environment, positionEnnemies): 
+                result.append(1)
+            else: 
+                result.append(-1)
             #positionSensorO.append((x+i, y+j,environment))
         for (i,j) in Xfood:
-            result.append(state.Xpatch(2, x+i, y+j,environment, positionEnnemies))
+            if state.Xpatch(2, x+i, y+j,environment, positionEnnemies): 
+                result.append(1)
+            else: 
+                result.append(-1)
             #positionSensorX.append((x+i, y+j,environment))
         #ennemies
         for (i,j) in Oennemies:
-            result.append(state.Opatch(1, x+i, y+j,environment, positionEnnemies))
+            if state.Opatch(1, x+i, y+j,environment, positionEnnemies):
+                result.append(-1)
+            else:
+                result.append(1)
             #positionSensorO.append((x+i,y+j,environment))
         for (i,j) in Xennemies:
-            result.append(state.Xpatch(1, x+i, y+j,environment, positionEnnemies))
+            if state.Xpatch(1, x+i, y+j,environment, positionEnnemies):
+                result.append(-1)
+            else:
+                result.append(1)
             #positionSensorX.append((x+i,y+j,environment))
         #obstacles
         for (i,j) in oobstacles:
-            result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
+            if state.opatch(x+i, y+j,environment, positionEnnemies):
+                result.append(-1)
+            else:
+                result.append(1)
         return result
         #return positionSensorY, positionSensorO, positionSensorX
             
@@ -210,13 +234,14 @@ class Agent(object):
         The policy of the agentgiven the current neural network, the best utility 
         for the different action it can performed and its current state. 
         """
-        action = state.learning_Utility()   # learning step of the agent to get the list of utilities' values
+        l_actions = state.learning_Utility()   # learning step of the agent to get the list of proba values for each action
+        print(l_actions)
+        action = np.argmax(l_actions)
         x,y = self.move(action,state, canvas, agentText, pas)  # we make move the agent according the best action possible 
         self.setPosition(x,y)  
       
         self.previousAction.pop(0) # we remove the first element of the list since we only record the 4 previous actions 
         self.previousAction.append(action)  # we add the new direction to the list of previous ones 
-        return U_list
 
     def sensorObstacle(self,state): 
         positionObstacle = []   # List of position of obstacle in function of position of agent 
