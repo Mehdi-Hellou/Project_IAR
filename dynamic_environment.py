@@ -55,7 +55,9 @@ class State:
 
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
-        self.gamma = 0.95  # the parameters for the learning 
+        self.gamma = 0.95  # the parameters for the learning
+        self.Temp = 0. # The temperature for the stochastic action selector 
+        self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.initiate_simulation()
         return
     
@@ -67,26 +69,36 @@ class State:
     
     #------------- fonction pour tester une case
     
-    def lookupObstacles(self, x, y):
+    def lookupObstacles(self, x, y,environment=None):
         if x<0 or x>=width or y<0 or y>=heigth:
             return True
-        if self.environment[x][y]==1:
+        
+        if environment != None and environment[x][y]==1:
+            return True
+        elif self.environment[x][y]==1:
             #print("obstacles !!! ")
             return True
         else:
             return False
     
-    def lookupFood(self, x, y):
+    def lookupFood(self, x, y,environment=None):
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
-        if self.environment[x][y]==2:
+
+        if environment != None and environment[x][y]==2:
+            return True
+        elif self.environment[x][y]==2:
             #print("food !!! ")
             return True
         else:
             return False
     
-    def lookupEnnemies(self, x, y):
-        positionEnnemies = [i.getPosition() for i in self.ennemies]
+    def lookupEnnemies(self, x, y,environment=None, positionEnnemies =  None):
+        """
+        positionEnnemies : position of ennemy of the environment has just been rotated
+        """
+        if positionEnnemies == None: 
+            positionEnnemies = [i.getPosition() for i in self.ennemies]
 
         if x<0 or x>=width or y<0 or y>=heigth:
             return False
@@ -96,35 +108,37 @@ class State:
         else:
             return False
     
-    def lookUpSensor(self, lookup, x, y):
+    def lookUpSensor(self, lookup, x, y, environment=None, positionEnnemies=None):
         #  if 2 we use the sensor to detect the food 
         if lookup == 2:   
-            return self.lookupFood(x,y)
+            return self.lookupFood(x,y, environment)
         #  if 1 we use the sensor to detect the ennemies 
         elif lookup == 1:           
-            return self.lookupEnnemies(x,y)
+            return self.lookupEnnemies(x,y, environment, positionEnnemies)
         #  else we use the sensor to detect the obstacles
         else: 
-            return self.lookupObstacles(x,y)
+            return self.lookupObstacles(x,y, environment)
 
     #---------------fonction de patch d'observation-------------
     
-    def opatch(self, x, y):
-        return self.lookUpSensor(0, x,y)
+    def opatch(self, x, y,environment=None, positionEnnemies=None):
+        return self.lookUpSensor(0, x,y,environment, positionEnnemies)
     
-    def Xpatch(self, lookup, x, y):
+    def Xpatch(self, lookup, x, y,environment=None,positionEnnemies=None):
         # lookup could be 2 to detect the food or 1 to detect the ennemies  
-        return self.lookUpSensor(lookup, x,y) or self.lookUpSensor(lookup, x-1,y) or self.lookUpSensor(lookup, x+1,y)\
-         or self.lookUpSensor(lookup, x,y-1) or self.lookUpSensor(lookup, x,y+1)
+        return self.lookUpSensor(lookup, x,y,environment,positionEnnemies) or self.lookUpSensor(lookup, x-1,y,environment,positionEnnemies)\
+        or self.lookUpSensor(lookup, x+1,y,environment,positionEnnemies) or self.lookUpSensor(lookup, x,y-1,environment,positionEnnemies)\
+        or self.lookUpSensor(lookup, x,y+1,environment,positionEnnemies)
     
-    def Opatch(self, lookup, x, y):
+    def Opatch(self, lookup, x, y,environment=None,positionEnnemies=None):
         # lookup could be 2 to detect the food or 1 to detect the ennemies
-        return self.Xpatch(lookup,x,y) or self.lookUpSensor(lookup, x-1,y-1) or self.lookUpSensor(lookup, x-1,y+1)\
-         or self.lookUpSensor(lookup, x+1,y-1) or self.lookUpSensor(lookup, x+1,y+1)
+        return self.Xpatch(lookup,x,y,environment) or self.lookUpSensor(lookup, x-1,y-1,environment,positionEnnemies)\
+        or self.lookUpSensor(lookup, x-1,y+1,environment,positionEnnemies) or self.lookUpSensor(lookup, x+1,y-1,environment,positionEnnemies)\
+        or self.lookUpSensor(lookup, x+1,y+1,environment,positionEnnemies)
     
-    def Ypatch(self, x, y):
-        return self.Opatch(2,x,y) or self.lookUpSensor(2, x-2,y) or self.lookUpSensor(2, x+2,y)\
-         or self.lookUpSensor(2, x,y-2) or self.lookUpSensor(2, x,y+2)
+    def Ypatch(self, x, y,environment=None,positionEnnemies=None):
+        return self.Opatch(2,x,y,environment) or self.lookUpSensor(2, x-2,y,environment,positionEnnemies) or self.lookUpSensor(2, x+2,y,environment,positionEnnemies)\
+         or self.lookUpSensor(2, x,y-2,environment,positionEnnemies) or self.lookUpSensor(2, x,y+2,environment,positionEnnemies)
     
     #-------------- fonctions d'affichage (a garder en bas)------------------
     
@@ -157,7 +171,6 @@ class State:
 
         X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
         
-        self.Opatch(2,self.agent.x, self.agent.y)
         self.ennemyText = []
         self.foodText = {}
         for i in range(25): 
@@ -191,13 +204,12 @@ class State:
     def moveAgent(self):
         getFood = False # boolean to know if the move of agent allowed him to get food or not 
         self.agent.policy(self, self.can, self.agentText, self.PAS)
-        self.sensors_result = np.asarray(self.agent.sensors(self)).astype(int)
-
         x,y = self.agent.getPosition()
 
         if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
             self.agent.reward = -1.0
             self.end = True
+            self.backpropagating()
             self.restart_simulation()
 
         elif self.lookupFood(x,y):
@@ -211,6 +223,7 @@ class State:
             self.agent.setEnergy(-1)
 
         self.agent.updateEnergy(self.can_life,self.life, getFood)
+        self.backpropagating()
         self.grille.after(1000,self.update)    # Resubscribe to make move again the agent each second
 
     def moveEnnemy(self):
@@ -236,42 +249,111 @@ class State:
         self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
         self.grille.mainloop()
 
-    def update(self):
-        
-        self.learning()# update the neural_network 
+    def update(self):        
         self.moveAgent()  # Subscribe to make move the agent 
 
     def restart_simulation(self): 
         self.grille.destroy()
-        State(obstacles, nn)
+        State(obstacles, self.nn)
         self.__del__()
 
 
-    def learning(self): 
+    def learning_Utility(self): 
+        """
+        Return the action that maximize the utility and the utiliy given by performing this action
+        """
         # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
 
         sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
-        sensors_result_O = np.asarray(self.agent.sensors(self,x = -1, y = 0)).astype(int)
-        sensors_result_S = np.asarray(self.agent.sensors(self,x = 0, y = 1)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors(self,x = 1, y = 0)).astype(int)
+        sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
+        sensors_result_S = np.asarray(self.rotationEnvironment(180)).astype(int)
+        sensors_result_E = np.asarray(self.rotationEnvironment(90)).astype(int)
 
-        input_nn_N = np.concatenate((sensors_result_N,input_nn))
-        input_nn_O = np.concatenate((sensors_result_O,input_nn))
-        input_nn_S = np.concatenate((sensors_result_S,input_nn))
-        input_nn_E = np.concatenate((sensors_result_E,input_nn))
+        input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
+        input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
+        input_nn_S = np.concatenate((sensors_result_S,input_nn))    # input when the South action is performed
+        input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
         
-        #output = np.argmax([self.nn.predict(input_nn_E),self.nn.predict(input_nn_S),self.nn.predict(input_nn_O),self.nn.predict(input_nn_N)])  # Prediction of the neural network 
-        output1 = self.nn.predict(input_nn_N.reshape(1,145))
-        
-        self.nn._train_one_step(input_nn_E.reshape(1,145),output1)
+        U_list = [self.nn.predict(input_nn_E.reshape(1,145)),self.nn.predict(input_nn_S.reshape(1,145)),\
+                self.nn.predict(input_nn_O.reshape(1,145)),self.nn.predict(input_nn_N.reshape(1,145))]
+        """reward_list = []
+        reward_list.append(self.getReward(self.agent.move_simulated(self,0)))
+        reward_list.append(self.getReward(self.agent.move_simulated(self,1)))
+        reward_list.append(self.getReward(self.agent.move_simulated(self,2)))
+        reward_list.append(self.getReward(self.agent.move_simulated(self,3)))"""
+
+        self.U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed     
+        action = self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
+        return action
+
+    def backpropagating(self): 
+        """
+        Backpropagate the errors delta U given the previous utility Umax computed during the first step
+        and the Utility max given the current state and the different action performed   
+        """ 
+        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
+
+        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
+        sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
+        sensors_result_S = np.asarray(self.rotationEnvironment(180)).astype(int)
+        sensors_result_E = np.asarray(self.rotationEnvironment(90)).astype(int)
+
+        input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
+        input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
+        input_nn_S = np.concatenate((sensors_result_S,input_nn))    # input when the South action is performed
+        input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
+
+        l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
+        parameters = [self.agent.reward,self.gamma]
+
+        U_list = [self.nn.predict(input_nn_E.reshape(1,145)),self.nn.predict(input_nn_S.reshape(1,145)),\
+                self.nn.predict(input_nn_O.reshape(1,145)),self.nn.predict(input_nn_N.reshape(1,145))]
+
+        U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed
+
+        index_input_maxU = np.argmax(U_list)   # the input given for the backprogating is the one with the maximum utility
+
+        Ui = self.U_list[self.agent.get_previousAction()[-1]]
+
+        input_nn = l_input[index_input_maxU].reshape(1,145)
+        self.nn._train_one_step(input_nn,Ui,parameters)
+
+    def rotationEnvironment(self, angle): 
+        """
+        Rotate the environment to establich the values of sensors according the rotation of the environment
+        angle : 90, 180 and 270 degrees rotation
+        """
+        x_agent, y_agent = self.agent.getPosition()
+        positionEnnemies = [i.getPosition() for i in self.ennemies]
+
+        env_move_E = np.rot90(np.asarray(self.environment)).tolist()   # when we make a rotation of 90 degrees of the map
+        env_move_S = np.rot90(np.asarray(env_move_E)).tolist()          # when we make a rotation of 180 degrees of the map
+        env_move_O = np.rot90(np.asarray(env_move_S)).tolist()          # when we make a rotation of 270 degrees of the map
+
+        x_agent, y_agent = (24 - y_agent, x_agent)  # the position of agent changes after a rotation of the map
+        positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies] # the ennemie position changes after a rotation of the map
+
+        if angle == 180 or angle == 270: 
+            x_agent, y_agent = (24 - y_agent, x_agent)
+            positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
+            if angle == 270: 
+                x_agent, y_agent = (24 - y_agent, x_agent)
+                positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
+                return self.agent.sensors(self, x = 0, y = -1, environment = env_move_O, positionEnnemies = positionEnnemies)
+            else:
+                return self.agent.sensors(self, x = 0, y = -1, environment = env_move_S, positionEnnemies = positionEnnemies)
+       
+        return self.agent.sensors(self, x = 0, y = -1, environment = env_move_E, positionEnnemies = positionEnnemies)
+
+    def actionSelector(self): 
 
     def __del__(self): 
         print("object deleted !!")
 
 if __name__ == '__main__':
     
-    nn = NeuralNetwork(5)  # the neural network used for the learning
+    nn = NeuralNetwork(30)  # the neural network used for the learning
 
     test= State(obstacles, nn)
     

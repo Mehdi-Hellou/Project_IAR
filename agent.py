@@ -3,6 +3,7 @@ import random
 import tkinter
 import dynamic_environment
 import math
+import numpy as np
 
 #list des positions des patch dans le senseurs
 
@@ -86,16 +87,16 @@ class Agent(object):
             canvas.delete(energy_bar[-1])
             energy_bar.pop()
 
-    def move(self, direction,state,canvas, agentText, pas): 
+    def move(self, direction,state=None,canvas=None, agentText=None, pas=None): 
         x,y = self.getPosition()
         # Bouger vers le Nord 
         if direction == 3: 
             if state.lookupObstacles(x, y-1)==False:
                 y = y - 1
                 canvas.move(agentText, 0, -pas)
-                self.previous_collision = False
+                self.previous_collision = 1
             else:
-                self.previous_collision = True
+                self.previous_collision = 0
 
             #print("Nord !")
         # Bouger vers l'Ouest
@@ -103,9 +104,9 @@ class Agent(object):
             if state.lookupObstacles(x - 1 ,y)==False:
                 x = x - 1
                 canvas.move(agentText, -pas, 0)
-                self.previous_collision = False
+                self.previous_collision = 1
             else:
-                self.previous_collision = True
+                self.previous_collision = 0
 
             #print("Ouest !")
         # Bouger vers le Sud
@@ -113,9 +114,9 @@ class Agent(object):
             if state.lookupObstacles(x , y + 1)==False:
                 y = y + 1
                 canvas.move(agentText, 0, pas)
-                self.previous_collision = False
+                self.previous_collision = 1
             else:
-                self.previous_collision = True
+                self.previous_collision = 0
 
             #print("Sud !") 
         # Bouger vers l'Est
@@ -123,11 +124,42 @@ class Agent(object):
             if state.lookupObstacles(x + 1 ,y)==False:
                 x = x + 1
                 canvas.move(agentText, pas, 0)
-                self.previous_collision = False
+                self.previous_collision = 1
             else:
-                self.previous_collision = True
+                self.previous_collision = 0
 
             #print("Est !")
+
+        return x,y
+
+    def move_simulated(self,state,direction): 
+        """
+        move for the simulation when we are at the step of learning
+        environment : the environment where the agent move which could be 
+                      the self environment, or the one after a rotation (90,180,270)   
+        direction = the direction of the movement 
+        """
+        # Toujours l'agent bouge vers le Nord
+        # car l'utilité est calculée en fonction du mérite de bouger vers le nord
+        # suivant les différentes configurations des ennemies   
+        
+        x,y = self.getPosition()
+
+        # Bouger vers le Nord 
+        if direction == 3: 
+            if state.lookupObstacles(x, y-1)==False:
+                y = y - 1
+        # Bouger vers l'Ouest
+        elif direction == 2: 
+            if state.lookupObstacles(x - 1 ,y)==False:
+                x = x - 1
+        elif direction == 1: 
+            if state.lookupObstacles(x , y + 1)==False:
+                y = y + 1
+        # Bouger vers l'Est
+        elif direction == 0: 
+            if state.lookupObstacles(x + 1 ,y)==False:
+                x = x + 1
 
         return x,y
 
@@ -138,7 +170,7 @@ class Agent(object):
         self.x = x
         self.y = y
             
-    def sensors(self, state, x = None, y = None):
+    def sensors(self, state, x = None, y = None, environment = None, positionEnnemies = None):
         #return the vector of detection
         result=[]
         
@@ -146,42 +178,45 @@ class Agent(object):
             (x,y)=state.agent.getPosition()
 
         else:
+            (x,y)=self.getPosition()
             x += self.x
             y += self.y  
 
         #food
         for (i,j) in Yfood:
-            result.append(state.Ypatch(x+i, y+j))
+            result.append(state.Ypatch(x+i, y+j, environment, positionEnnemies))
             #positionSensorY.append((x+i, y+j))
         for (i,j) in Ofood:
-            result.append(state.Opatch(2, x+i, y+j))
-            #positionSensorO.append((x+i, y+j))
+            result.append(state.Opatch(2, x+i, y+j,environment, positionEnnemies))
+            #positionSensorO.append((x+i, y+j,environment))
         for (i,j) in Xfood:
-            result.append(state.Xpatch(2, x+i, y+j))
-            #positionSensorX.append((x+i, y+j))
+            result.append(state.Xpatch(2, x+i, y+j,environment, positionEnnemies))
+            #positionSensorX.append((x+i, y+j,environment))
         #ennemies
         for (i,j) in Oennemies:
-            result.append(state.Opatch(1, x+i, y+j))
-            #positionSensorO.append((x+i,y+j))
+            result.append(state.Opatch(1, x+i, y+j,environment, positionEnnemies))
+            #positionSensorO.append((x+i,y+j,environment))
         for (i,j) in Xennemies:
-            result.append(state.Xpatch(1, x+i, y+j))
-            #positionSensorX.append((x+i,y+j))
+            result.append(state.Xpatch(1, x+i, y+j,environment, positionEnnemies))
+            #positionSensorX.append((x+i,y+j,environment))
         #obstacles
         for (i,j) in oobstacles:
-            result.append(state.opatch(x+i, y+j))
+            result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
         return result
         #return positionSensorY, positionSensorO, positionSensorX
             
     def policy(self, state, canvas, agentText, pas):
-        direction = random.randint(0,3)
-
-        x,y = self.move(direction,state, canvas, agentText, pas)
-        self.setPosition(x,y)
+        """
+        The policy of the agentgiven the current neural network, the best utility 
+        for the different action it can performed and its current state. 
+        """
+        action = state.learning_Utility()   # learning step of the agent to get the list of utilities' values
+        x,y = self.move(action,state, canvas, agentText, pas)  # we make move the agent according the best action possible 
+        self.setPosition(x,y)  
       
         self.previousAction.pop(0) # we remove the first element of the list since we only record the 4 previous actions 
-        self.previousAction.append(direction)  # we add the new direction to the list of previous ones 
-
-
+        self.previousAction.append(action)  # we add the new direction to the list of previous ones 
+        return U_list
 
     def sensorObstacle(self,state): 
         positionObstacle = []   # List of position of obstacle in function of position of agent 
