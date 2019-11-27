@@ -69,10 +69,7 @@ class Agent(object):
         return self.previousAction
 
     def get_previous_collision(self): 
-        if self.previous_collision: 
-            return -1
-        else: 
-            return 1
+        return self.previous_collision
          
     def updateEnergy(self,canvas, energy_bar, getFood):
         """
@@ -190,42 +187,25 @@ class Agent(object):
 
         #food
         for (i,j) in Yfood:
-            if state.Ypatch(x+i, y+j, environment, positionEnnemies):
-                result.append(1)
-            else: 
-                result.append(-1)
+            result.append(state.Ypatch(x+i, y+j, environment, positionEnnemies))
             #positionSensorY.append((x+i, y+j))
-        for (i,j) in Ofood:
-            if state.Opatch(2, x+i, y+j,environment, positionEnnemies): 
-                result.append(1)
-            else: 
-                result.append(-1)
+        for (i,j) in Ofood: 
+            result.append(state.Opatch(2, x+i, y+j,environment, positionEnnemies))
             #positionSensorO.append((x+i, y+j,environment))
         for (i,j) in Xfood:
-            if state.Xpatch(2, x+i, y+j,environment, positionEnnemies): 
-                result.append(1)
-            else: 
-                result.append(-1)
+            result.append(state.Xpatch(2, x+i, y+j,environment, positionEnnemies))
             #positionSensorX.append((x+i, y+j,environment))
         #ennemies
         for (i,j) in Oennemies:
-            if state.Opatch(1, x+i, y+j,environment, positionEnnemies):
-                result.append(-1)
-            else:
-                result.append(1)
+            result.append(state.Opatch(1, x+i, y+j,environment, positionEnnemies))
             #positionSensorO.append((x+i,y+j,environment))
         for (i,j) in Xennemies:
-            if state.Xpatch(1, x+i, y+j,environment, positionEnnemies):
-                result.append(-1)
-            else:
-                result.append(1)
+            result.append(state.Xpatch(1, x+i, y+j,environment, positionEnnemies))
             #positionSensorX.append((x+i,y+j,environment))
         #obstacles
         for (i,j) in oobstacles:
-            if state.opatch(x+i, y+j,environment, positionEnnemies):
-                result.append(-1)
-            else:
-                result.append(1)
+            result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
+
         return result
         #return positionSensorY, positionSensorO, positionSensorX
             

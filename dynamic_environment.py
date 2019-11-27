@@ -263,13 +263,13 @@ class State:
         Return the action that maximize the utility and the utiliy given by performing this action
         """
         # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
-        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [self.agent.get_previous_collision()]) 
+        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
 
         # Get the results from the sensors according the different movement executed by the agent 
-        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1))
-        sensors_result_O = np.asarray(self.rotationEnvironment(270))
-        sensors_result_S = np.asarray(self.rotationEnvironment(180))
-        sensors_result_E = np.asarray(self.rotationEnvironment(90))
+        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int).astype(int)
+        sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
+        sensors_result_S = np.asarray(self.rotationEnvironment(180)).astype(int)
+        sensors_result_E = np.asarray(self.rotationEnvironment(90)).astype(int)
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
@@ -287,7 +287,7 @@ class State:
         Backpropagate the errors delta U given the previous utility Umax computed during the first step
         and the Utility max given the current state and the different action performed   
         """ 
-        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [self.agent.get_previous_collision()]) 
+        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
         print(self.agent.get_previousAction())
         sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
         sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
