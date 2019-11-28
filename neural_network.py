@@ -41,7 +41,7 @@ class NeuralNetwork(object):
             init = tf.constant_initializer(0.1*np.random.rand(n_hidden,1))
             self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
         else:
-            self.model  = tf.keras.models.load_model(path_load)
+            self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
         
         self.model.compile(loss=customLoss)
         self.optimizer = tf.keras.optimizers.SGD(learning_rate=0.3, momentum = 0.9 )
@@ -93,7 +93,7 @@ def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):
 if __name__ == '__main__':
     input_nn = np.random.randint(145, size = 145)
     input_nn = input_nn.reshape(1,145)
-    output = try_nn(5, input_nn, [0.4,0.9], path_save = "save.h5")
+    output = try_nn(5, input_nn, [0.4,0.9],path_load = "save.h5", path_save = "save.h5")
     print(float(output))
     #model = NeuralNetwork(5)
 
