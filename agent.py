@@ -173,8 +173,9 @@ class Agent(object):
         self.x = x
         self.y = y
             
-    def sensors(self, state, x = None, y = None, environment = None, positionEnnemies = None):
+    def sensors(self, state, x = None, y = None, environment = None, positionEnnemies = None, direction = 3):
         #return the vector of detection
+        #pour les directions: 3= nord, 2=ouest, 1=sud, 0 = est
         result=[]
         
         if x == None and y == None: 
@@ -186,28 +187,44 @@ class Agent(object):
             y += self.y  
 
         #food
-        for (i,j) in Yfood:
+        for (i0,j0) in Yfood:
+            (i,j) = oriente(i0,j0, direction)
             result.append(state.Ypatch(x+i, y+j, environment, positionEnnemies))
             #positionSensorY.append((x+i, y+j))
-        for (i,j) in Ofood: 
+        for (i0,j0) in Ofood: 
+            (i,j) = oriente(i0,j0, direction)
             result.append(state.Opatch(2, x+i, y+j,environment, positionEnnemies))
             #positionSensorO.append((x+i, y+j,environment))
-        for (i,j) in Xfood:
+        for (i0,j0) in Xfood:
+            (i,j) = oriente(i0,j0, direction)
             result.append(state.Xpatch(2, x+i, y+j,environment, positionEnnemies))
             #positionSensorX.append((x+i, y+j,environment))
         #ennemies
-        for (i,j) in Oennemies:
+        for (i0,j0) in Oennemies:
+            (i,j) = oriente(i0,j0, direction)
             result.append(state.Opatch(1, x+i, y+j,environment, positionEnnemies))
             #positionSensorO.append((x+i,y+j,environment))
-        for (i,j) in Xennemies:
+        for (i0,j0) in Xennemies:
+            (i,j) = oriente(i0,j0, direction)
             result.append(state.Xpatch(1, x+i, y+j,environment, positionEnnemies))
             #positionSensorX.append((x+i,y+j,environment))
         #obstacles
-        for (i,j) in oobstacles:
+        for (i0,j0) in oobstacles:
+            (i,j) = oriente(i0,j0, direction)
             result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
 
         return result
         #return positionSensorY, positionSensorO, positionSensorX
+    
+    def oriente(x,y,direction):
+        if direction == 3:
+            return (x,y)
+        elif direction ==2:
+            return (y,-x)
+        elif direction == 1:
+            return (-x,-y)
+        elif direction ==0:
+            return (-y, x)
             
     def policy(self, state, canvas, agentText, pas):
         """

@@ -289,10 +289,13 @@ class State:
         """ 
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
         print(self.agent.get_previousAction())
-        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1)).astype(int)
-        sensors_result_O = np.asarray(self.rotationEnvironment(270)).astype(int)
-        sensors_result_S = np.asarray(self.rotationEnvironment(180)).astype(int)
-        sensors_result_E = np.asarray(self.rotationEnvironment(90)).astype(int)
+        sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1, oriente=3)).astype(int)
+        sensors_result_O =np.asarray(self.agent.sensors(self, x = 0, y = -1, oriente=2)).astype(int) 
+        #np.asarray(self.rotationEnvironment(270)).astype(int)
+        sensors_result_S = np.asarray(self.agent.sensors(self, x = 0, y = -1, oriente=1)).astype(int) 
+        #np.asarray(self.rotationEnvironment(180)).astype(int)
+        sensors_result_E = np.asarray(self.agent.sensors(self, x = 0, y = -1, oriente=0)).astype(int) 
+        #np.asarray(self.rotationEnvironment(90)).astype(int)
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
