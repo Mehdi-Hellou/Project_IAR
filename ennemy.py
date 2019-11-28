@@ -12,7 +12,7 @@ class Ennemy(object):
         self.x = x
         self.environment = environment
 
-    def move(self, direction, canvas, ennemyText, pas):
+    def move(self, direction, ennemyText, pas, canvas = None):
         """
         direction : direction of the movement (Est,West,North,South)
         state : the environment of dynamic  
@@ -22,25 +22,25 @@ class Ennemy(object):
         if direction == 3: 
             if self.environment.lookupObstacles(x, y - 1)==False: 
                 y = y - 1
-                if canvas != None: 
+                if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, 0, -pas)
         # Bouger vers l'Ouest
         elif direction == 2:
             if self.environment.lookupObstacles(x - 1 ,y)==False: 
                 x = x - 1
-                if canvas != None:
+                if (canvas != None) and (ennemyText != None) and (pas !=None):
                     canvas.move(ennemyText, -pas, 0)            
         # Bouger vers le Sud
         elif direction == 1: 
             if self.environment.lookupObstacles(x,y + 1)==False:
                 y = y + 1
-                if canvas != None: 
+                if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, 0, pas)
         # Bouger vers l'Est
         elif direction == 0: 
             if self.environment.lookupObstacles(x + 1,y)==False:
                 x = x + 1
-                if canvas !=  None: 
+                if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, pas, 0)
         
         return x,y
@@ -77,7 +77,7 @@ class Ennemy(object):
         self.x = x
         self.y = y
             
-    def strategy(self, canvas, ennemyText, pas): 
+    def strategy(self, ennemyText = None, pas = None, canvas = None): 
         """
         The strategy of the ennemy for moving into the environnement 
         """
@@ -97,7 +97,7 @@ class Ennemy(object):
 
         move = np.argmax(Pa)    # we took the one with the best proba
         
-        x,y = self.move(move,canvas, ennemyText, pas)
+        x,y = self.move(move, ennemyText, pas, canvas)
         self.setPosition(x,y)
         #self.updateCanvasText(move, canvas, ennemyText, pas)
 

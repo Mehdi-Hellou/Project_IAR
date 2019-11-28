@@ -24,7 +24,15 @@ Xennemies=[(0,-2), (-1,-1), (0,-1), (1,-1), (-2,0), (-1,0), (1,0), (2,0), (0,2),
 #senseur d'obstacle (patches o)
 oobstacles=[(0,-4), (-1,-3), (0,-3), (1,-3), (-2,-2), (-1,-2), (0,-2), (1,-2), (2,-2), (-3,-1), (-2,-1), (-1,-1), (0,-1), (3,-1), (2,-1), (1,-1), (-4,0), (-3,0),(-2,0), (-1,0), (4,0), (3,0), (2,0), (1,0), (0,4), (-1,3), (0,3), (1,3), (-2,2), (-1,2), (0,2), (1,2), (2,2), (-3,1), (-2,1), (-1,1), (0,1), (3,1), (2,1), (1,1)]
 
-
+def oriente(x,y,direction):
+    if direction == 3:
+        return (x,y)
+    elif direction ==2:
+        return (y,-x)
+    elif direction == 1:
+        return (-x,-y)
+    elif direction ==0:
+        return (-y, x)
 
 
 
@@ -79,16 +87,17 @@ class Agent(object):
         """
         energy = self.remaining_energy()
         #print(energy)
-        if getFood:  # if the agent get the food
-            length = math.ceil(energy/5)  # we took the lenght corresponding to the upper round of the energy bar divide by 5
+        if (canvas!=None) and (energy_bar != None):
+            if getFood:  # if the agent get the food
+                length = math.ceil(energy/5)  # we took the lenght corresponding to the upper round of the energy bar divide by 5
 
-            for i in range ( len(energy_bar), length): 
-                x_index = i * 25 + 1
-                energy_bar.append(canvas.create_rectangle(x_index, 0, x_index + 25, 25, fill="red", width = 0.5))
+                for i in range ( len(energy_bar), length): 
+                    x_index = i * 25 + 1
+                    energy_bar.append(canvas.create_rectangle(x_index, 0, x_index + 25, 25, fill="red", width = 0.5))
 
-        elif energy%5 == 0: 
-            canvas.delete(energy_bar[-1])
-            energy_bar.pop()
+            elif energy%5 == 0: 
+                canvas.delete(energy_bar[-1])
+                energy_bar.pop()
 
     def move(self, direction,state=None,canvas=None, agentText=None, pas=None): 
         x,y = self.getPosition()
@@ -96,7 +105,8 @@ class Agent(object):
         if direction == 3: 
             if state.lookupObstacles(x, y-1)==False:
                 y = y - 1
-                canvas.move(agentText, 0, -pas)
+                if (canvas !=None) and (agentText != None) and (pas != None):
+                    canvas.move(agentText, 0, -pas)
                 self.previous_collision = False
             else:
                 self.previous_collision = True
@@ -106,7 +116,8 @@ class Agent(object):
         elif direction == 2: 
             if state.lookupObstacles(x - 1 ,y)==False:
                 x = x - 1
-                canvas.move(agentText, -pas, 0)
+                if (canvas !=None) and (agentText != None) and (pas != None):
+                    canvas.move(agentText, -pas, 0)
                 self.previous_collision = False
             else:
                 self.previous_collision = True
@@ -116,7 +127,8 @@ class Agent(object):
         elif direction == 1: 
             if state.lookupObstacles(x , y + 1)==False:
                 y = y + 1
-                canvas.move(agentText, 0, pas)
+                if (canvas !=None) and (agentText != None) and (pas != None):
+                    canvas.move(agentText, 0, pas)
                 self.previous_collision = False
             else:
                 self.previous_collision = True
@@ -126,7 +138,8 @@ class Agent(object):
         elif direction == 0: 
             if state.lookupObstacles(x + 1 ,y)==False:
                 x = x + 1
-                canvas.move(agentText, pas, 0)
+                if (canvas !=None) and (agentText != None) and (pas != None):
+                    canvas.move(agentText, pas, 0)
                 self.previous_collision = False
             else:
                 self.previous_collision = True
@@ -216,17 +229,9 @@ class Agent(object):
         return result
         #return positionSensorY, positionSensorO, positionSensorX
     
-    def oriente(x,y,direction):
-        if direction == 3:
-            return (x,y)
-        elif direction ==2:
-            return (y,-x)
-        elif direction == 1:
-            return (-x,-y)
-        elif direction ==0:
-            return (-y, x)
+    
             
-    def policy(self, state, canvas, agentText, pas):
+    def policy(self, state, agentText, pas, canvas = None):
         """
         The policy of the agentgiven the current neural network, the best utility 
         for the different action it can performed and its current state. 
@@ -234,7 +239,7 @@ class Agent(object):
         l_actions = state.learning_Utility()   # learning step of the agent to get the list of proba values for each action
         print(l_actions)
         action = np.argmax(l_actions)
-        x,y = self.move(action,state, canvas, agentText, pas)  # we make move the agent according the best action possible 
+        x,y = self.move(action,state, agentText, pas, canvas)  # we make move the agent according the best action possible 
         self.setPosition(x,y)  
       
         self.previousAction.pop(0) # we remove the first element of the list since we only record the 4 previous actions 
