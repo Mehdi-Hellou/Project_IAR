@@ -68,7 +68,7 @@ class State:
         self.ennemyText=None
         if display:
             self.initiate_simulation()
-        return
+        
     
     def is_empty(self,x,y):
         return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in [i.getPosition() for i in self.ennemies]) and self.environment[x][y]!=1
@@ -210,7 +210,7 @@ class State:
         for i in range(1,200,25): 
             self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))           
                         
-    def moveAgent(self, display= False):
+    def moveAgent(self, learning = False, display= False):
         getFood = False # boolean to know if the move of agent allowed him to get food or not 
         self.agent.policy(self, self.agentText, self.PAS, self.can)
         x,y = self.agent.getPosition()
@@ -218,14 +218,16 @@ class State:
         if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
             self.agent.reward = -1.0
             self.end = True
-            self.restart_simulation() #Non! ce n'est pas le travail de cette fonction!
+            #Non! ce n'est pas le travail de cette fonction! on a pas forcément envie de la redémarrer tout de suite!
+            #self.restart_simulation() 
 
         elif self.lookupFood(x,y):
             self.agent.setEnergy(15)
             self.agent.reward = 0.4
-            self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
-            totalFood+=1
-            if totalFood==15:
+            if display:
+                self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
+            self.totalFood+=1
+            if self.totalFood==15:
                 self.end=True
             getFood = True
             
@@ -234,7 +236,8 @@ class State:
             self.agent.setEnergy(-1, self)
 
         self.agent.updateEnergy(self.can_life,self.life, getFood)
-        self.backpropagating()
+        if learning:
+            self.backpropagating()
         if display:
             self.grille.after(1000,self.update)    # Resubscribe to make move again the agent each second
 
@@ -255,7 +258,8 @@ class State:
             if self.agent.getPosition() == ennemy.getPosition(): # if the movement of the ennemy is in the agent's position it is the end of the simulation
                 self.agent.reward = -1.0
                 self.end = True
-                self.restart_simulation()
+                #Non! ce n'est pas le travail de cette fonction! on a pas forcément envie de la redémarrer tout de suite!
+                #self.restart_simulation()
 
         if display:
             self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
@@ -379,13 +383,38 @@ class State:
         self.moveAgent()
         self.moveEnnemy()
         return
-    
-if __name__ == '__main__':
-    
-    nn = NeuralNetwork(30)  # the neural network used for the learning
+#
 
-    test= State(obstacles, nn)
-    test.make_a_step_no_learning_no_display()
+
+def execute_simulation_no_learning_no_display(path_to_nn = None):
+    if path_to_nn ==None:
+        nn = NeuralNetwork(30)
+    else:
+        nn = NeuralNetwork(path_load = path_to_nn)
+    experiment = State(obstacles, nn)
+    while not(experiment.end):
+        experiment.moveAgent()
+        experiment.moveEnnemy()
+    return experiment.totalFood
+
+def test_network(path_to_nn):
+    results = [0 for i  in range(50)]
+    for i in range(50):
+        print("----------------------------------------%d---------------------------------------------" % i)
+        results[i] = execute_simulation_no_learning_no_display(path_to_nn)
+    mean = sum(results)/50
+    return (mean,results)
+
+if __name__ == '__main__':
+    food = execute_simulation_no_learning_no_display()
+    print("food = ", food)
+    (m,l) = test_network("save.h5")
+    print("nourriture obtenue:", l)
+    print("moyenne:", m)
+    #nn = NeuralNetwork(30)  # the neural network used for the learning
+
+    #test= State(obstacles, nn)
+    #test.make_a_step_no_learning_no_display()
     
 
     
