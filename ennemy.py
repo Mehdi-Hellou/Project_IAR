@@ -20,55 +20,30 @@ class Ennemy(object):
         x,y = self.getPosition() 
         # Bouger vers le Nord 
         if direction == 3: 
-            if self.environment.lookupObstacles(x, y - 1)==False: 
+            if self.environment.lookupObstacles(x, y - 1)==False and not(self.environment.lookupEnnemies(x,y-1)): 
                 y = y - 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, 0, -pas)
         # Bouger vers l'Ouest
         elif direction == 2:
-            if self.environment.lookupObstacles(x - 1 ,y)==False: 
-                x = x - 1
+            if self.environment.lookupObstacles(x - 1 ,y)==False and not(self.environment.lookupEnnemies(x-1,y)): 
+                x = x - 2
                 if (canvas != None) and (ennemyText != None) and (pas !=None):
                     canvas.move(ennemyText, -pas, 0)            
         # Bouger vers le Sud
         elif direction == 1: 
-            if self.environment.lookupObstacles(x,y + 1)==False:
+            if self.environment.lookupObstacles(x,y + 1)==False and not(self.environment.lookupEnnemies(x,y+1)):
                 y = y + 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, 0, pas)
         # Bouger vers l'Est
         elif direction == 0: 
-            if self.environment.lookupObstacles(x + 1,y)==False:
+            if self.environment.lookupObstacles(x + 1,y)==False and not(self.environment.lookupEnnemies(x+1,y)):
                 x = x + 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, pas, 0)
         
         return x,y
-
-    #def updateCanvasText(self, direction, canvas, ennemyText, pas): 
-        """canvas : the grid of the simulated environment 
-        ennemyText : the text that indicates the ennemy position in the canvas
-        pas : the step between each case of the grid to move physically the ennemy into it 
-        """
-        """# Bouger vers le Nord 
-        if direction == 3: 
-            canvas.move(ennemyText, 0, -pas)
-            #print("Nord!!")
-            
-        # Bouger vers l'Ouest
-        elif direction == 2:
-            canvas.move(ennemyText, -pas, 0)
-            #print("West!!")
-
-        # Bouger vers le Sud
-        elif direction == 1: 
-            canvas.move(ennemyText, 0, pas)
-            #print("Sud!!")
-
-        # Bouger vers l'Est
-        elif direction == 0: 
-            canvas.move(ennemyText, pas, 0)
-            #print("Est!!")"""
 
     def getPosition(self): 
         return (self.x, self.y)
@@ -99,7 +74,6 @@ class Ennemy(object):
         
         x,y = self.move(move, ennemyText, pas, canvas)
         self.setPosition(x,y)
-        #self.updateCanvasText(move, canvas, ennemyText, pas)
 
         
 

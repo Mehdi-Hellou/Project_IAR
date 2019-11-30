@@ -60,6 +60,8 @@ class Agent(object):
             self.energy += value
         
         if self.remaining_energy() < 0: 
+            self.energy = 0
+            self.reward = -1.0
             end = True
         # We set the coarse coding of the agent's energy for the neural network
         len_now = int(self.energy//2.5) 

@@ -64,11 +64,12 @@ class NeuralNetwork(object):
         """
         X : list of inputs of differents action that could be performed 
         """
-        r = parameters[0] 
-        gamma = parameters[1]
+        r2 = parameters[2]
+        r = parameters[1] 
+        gamma = parameters[0]
 
         with tf.GradientTape() as tape:
-            yp = self.predict(X) * gamma + r            
+            yp = (self.predict(X) * gamma + r2) * gamma + r            
             loss = customLoss(yp,y)
         #print(loss)
         gradients = tape.gradient(loss, self.model.trainable_variables)
