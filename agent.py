@@ -66,7 +66,7 @@ class Agent(object):
         self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
 
         if end and state != None: # if the agent hasn't remained energy  
-            state.restart_simulation()  # we restart the simulation
+            state.end = True  # we restart the simulation
         #print(self.coarseEnergy)
         return 
 
@@ -237,9 +237,9 @@ class Agent(object):
         for the different action it can performed and its current state. 
         """
         l_actions = state.learning_Utility()   # learning step of the agent to get the list of proba values for each action
-        print(l_actions)
+        #print(l_actions)
         action = np.argmax(l_actions)
-        x,y = self.move(action,state, agentText, pas, canvas)  # we make move the agent according the best action possible 
+        x,y = self.move(action,state, canvas,agentText, pas)  # we make move the agent according the best action possible 
         self.setPosition(x,y)  
       
         self.previousAction.pop(0) # we remove the first element of the list since we only record the 4 previous actions 

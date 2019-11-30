@@ -70,11 +70,11 @@ class NeuralNetwork(object):
         with tf.GradientTape() as tape:
             yp = self.predict(X) * gamma + r            
             loss = customLoss(yp,y)
-        print(loss)
+        #print(loss)
         gradients = tape.gradient(loss, self.model.trainable_variables)
         l = self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         d = dict(loss=loss)
-        tf.print(yp[0], loss)
+        #tf.print(yp[0], loss)
 #
 
 def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):

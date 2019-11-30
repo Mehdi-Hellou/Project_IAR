@@ -42,7 +42,15 @@ class State:
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]
-        self.agent = agt.Agent(13,12, 40)
+        
+        x = random.randint(0,24)
+        y = random.randint(0,24)
+        while not self.is_empty(x,y,agentInit = False):
+            x = random.randint(0,24)
+            y = random.randint(0,24)
+        
+        self.agent = agt.Agent(13,14, 40)
+        
         for i in range(15):
             x = random.randint(0,24)
             y = random.randint(0,24)
@@ -66,13 +74,19 @@ class State:
         self.can_life = None
         self.life = None
         self.ennemyText=None
-        if display:
+
+        self.display = display
+        if self.display:
             self.initiate_simulation()
         
     
-    def is_empty(self,x,y):
-        return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in [i.getPosition() for i in self.ennemies]) and self.environment[x][y]!=1
-    
+    def is_empty(self,x,y,agentInit=True):
+
+        if agentInit: 
+            return (self.environment[x][y]==0) and ((x,y)!= self.agent.getPosition()) and not((x,y) in [i.getPosition() for i in self.ennemies]) and self.environment[x][y]!=1
+        else: 
+            return (self.environment[x][y]==0) and not((x,y) in [i.getPosition() for i in self.ennemies]) and self.environment[x][y]!=1
+
     def remaining_energy(self):
         return self.agent.remaining_energy()
     
@@ -208,13 +222,20 @@ class State:
         self.can_life.pack(side = "left") 
 
         for i in range(1,200,25): 
-            self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))           
+            self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))      
+
+    def deleteFood(self,x,y): 
+        """
+        Delete the food from the simulator
+        """     
+        self.environment[x][y] = 0      # the value of the case change 
+        self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
                         
     def moveAgent(self, learning = False, display= False):
         getFood = False # boolean to know if the move of agent allowed him to get food or not 
         self.agent.policy(self, self.agentText, self.PAS, self.can)
         x,y = self.agent.getPosition()
-
+        
         if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
             self.agent.reward = -1.0
             self.end = True
@@ -222,23 +243,25 @@ class State:
             #self.restart_simulation() 
 
         elif self.lookupFood(x,y):
+            self.agent.reward = 0.4            
             self.agent.setEnergy(15)
-            self.agent.reward = 0.4
             if display:
                 self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
+            self.deleteFood(x,y)  # delete the food from the environment
             self.totalFood+=1
             if self.totalFood==15:
                 self.end=True
             getFood = True
-            
+        
         else: 
             self.agent.reward = 0.0
             self.agent.setEnergy(-1, self)
 
         self.agent.updateEnergy(self.can_life,self.life, getFood)
         if learning:
-            self.backpropagating()
-        if display:
+            self.backpropagating()        
+
+        if self.display:
             self.grille.after(1000,self.update)    # Resubscribe to make move again the agent each second
 
     def moveEnnemy(self, display=False):
@@ -256,27 +279,32 @@ class State:
 
 
             if self.agent.getPosition() == ennemy.getPosition(): # if the movement of the ennemy is in the agent's position it is the end of the simulation
-                self.agent.reward = -1.0
                 self.end = True
                 #Non! ce n'est pas le travail de cette fonction! on a pas forcément envie de la redémarrer tout de suite!
                 #self.restart_simulation()
+                self.agent.reward = -1.0
+                self.backpropagating()
 
-        if display:
+        if self.display:
             self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
         self.print_grid_line()
-        self.grille.after(1000,self.moveAgent)  # Subscribe to make move the agent
-        self.grille.after(1200, self.moveEnnemy) # Subscribe to make move the ennemies 
+        self.grille.after(800,self.moveAgent)  # Subscribe to make move the agent
+        self.grille.after(1000, self.moveEnnemy) # Subscribe to make move the ennemies 
         self.grille.mainloop()
 
-    def update(self):        
-        self.moveAgent()  # Subscribe to make move the agent 
+    def update(self):
+        if self.end: 
+            self.restart_simulation()
+        else:
+            self.backpropagating()        
+            self.moveAgent()  # Subscribe to make move the agent 
 
     def restart_simulation(self): 
-        self.backpropagating()
+        self.backpropagating()    # we backpropagate the error of the current 
         self.grille.destroy()
-        State(obstacles, self.nn)
+        State(obstacles, self.nn, self.display)
         self.__del__()
 
 
@@ -300,11 +328,14 @@ class State:
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
         input_nn_S = np.concatenate((sensors_result_S,input_nn))    # input when the South action is performed
         input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
-        
-        U_list = [self.nn.predict(input_nn_E.reshape(1,145)),self.nn.predict(input_nn_S.reshape(1,145)),\
-                self.nn.predict(input_nn_O.reshape(1,145)),self.nn.predict(input_nn_N.reshape(1,145))]
 
-        self.U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed     
+        U_list = [self.nn.predict(input_nn_E.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 0),\
+                  self.nn.predict(input_nn_S.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 1),\
+                  self.nn.predict(input_nn_O.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 2),\
+                  self.nn.predict(input_nn_N.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 3)]
+
+        print("The reward is %f" %(self.agent.reward) ) 
+        self.U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed    
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
 
     def backpropagating(self): 
@@ -313,7 +344,7 @@ class State:
         and the Utility max given the current state and the different action performed   
         """ 
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
-        print(self.agent.get_previousAction())
+        #print(self.agent.get_previousAction())
         sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1, direction=3)).astype(int)
         sensors_result_O =np.asarray(self.agent.sensors(self, x = 0, y = -1, direction=2)).astype(int) 
         #np.asarray(self.rotationEnvironment(270)).astype(int)
@@ -328,10 +359,14 @@ class State:
         input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
 
         l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
+        
+        print("The reward is in baskpropagating %f" %(self.agent.reward) ) 
         parameters = [self.agent.reward,self.gamma]
 
-        U_list = [self.nn.predict(input_nn_E.reshape(1,145)),self.nn.predict(input_nn_S.reshape(1,145)),\
-                self.nn.predict(input_nn_O.reshape(1,145)),self.nn.predict(input_nn_N.reshape(1,145))]
+        U_list = [self.nn.predict(input_nn_E.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 0),\
+                  self.nn.predict(input_nn_S.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 1),\
+                  self.nn.predict(input_nn_O.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 2),\
+                  self.nn.predict(input_nn_N.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 3)]
 
         U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed
 
@@ -342,6 +377,25 @@ class State:
         input_nn = l_input[index_input_maxU].reshape(1,145)
         self.nn._train_one_step(input_nn,Ui,parameters)
 
+    def getRewardAgent(self,direction = None): 
+        """
+        get the reward from the currnet position of the agent 
+        or from the simulated position of the agent after a movement
+        """
+        if direction == None:
+            x,y = self.agent.getPosition()
+        else: 
+            x,y = self.agent.move_simulated(self,direction)
+        
+        if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
+            reward = -1.0        
+        elif self.lookupFood(x,y):            
+            reward = 0.4        
+        else: 
+            reward = 0.0
+
+        return reward
+    
     def rotationEnvironment(self, angle): 
         """
         Rotate the environment to establich the values of sensors according the rotation of the environment
@@ -374,17 +428,12 @@ class State:
 
         action_proba =[np.exp(m/self.Temp)/s for m in self.U_list]
         return action_proba
-
-    def __del__(self): 
-        print("object deleted !!")
-        
+       
         
     def make_a_step_no_learning_no_display(self):
         self.moveAgent()
         self.moveEnnemy()
         return
-#
-
 
 def execute_simulation_no_learning_no_display(path_to_nn = None):
     if path_to_nn ==None:
@@ -411,10 +460,11 @@ if __name__ == '__main__':
     (m,l) = test_network("save.h5")
     print("nourriture obtenue:", l)
     print("moyenne:", m)
-    #nn = NeuralNetwork(30)  # the neural network used for the learning
-
+    """#nn = NeuralNetwork(30)  # the neural network used for the learning
+    nn = NeuralNetwork(30)  # the neural network used for the learning
+    test= State(obstacles, nn, display=True)
     #test= State(obstacles, nn)
-    #test.make_a_step_no_learning_no_display()
+    #test.make_a_step_no_learning_no_display()"""
     
 
     
