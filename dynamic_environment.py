@@ -222,6 +222,124 @@ class State:
 
         for i in range(1,200,25): 
             self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))      
+            
+    def print_sensors(self, target): #fonction affichant la position (et les activations) des patch
+        #target: 0=obstacles, 1= ennemies, 2 =food
+        windows_Size=800
+        self.grille = tkinter.Tk()
+        self.can=tkinter.Canvas(self.grille,bg="light gray", height=windows_Size, width=windows_Size)
+        self.can.pack()
+
+        self.PAS = int(windows_Size/width)   # Pas en fonction de la taille de la fenetre ainsi que la taille de notre grillage dans la simulation 
+
+        X0 = Y0 = int(self.PAS/2)           # coordonner pour centrer le texte au milieu de chaque case 
+        
+        self.ennemyText = []
+        self.foodText = {}
+        (a,b) = self.agent.getPosition()
+        if target ==2:
+            YFoodPatch = [(a+x,b+y) for (x,y) in agt.Yfood]
+            OFoodPatch = [(a+x,b+y) for (x,y) in agt.Ofood]
+            XFoodPatch = [(a+x,b+y) for (x,y) in agt.Xfood]
+            allFoodPatch = YFoodPatch + OFoodPatch + XFoodPatch
+        if target ==1:
+            OEnnemyPatch = [(a+x,b+y) for (x,y) in agt.Oennemies]
+            XEnnemyPatch = [(a+x,b+y) for (x,y) in agt.Xennemies]
+            allEnnemyPatch = OEnnemyPatch + XEnnemyPatch
+        if target==0:
+            ObstaclesPatch = [(a+x,b+y) for (x,y) in agt.oobstacles]
+        for i in range(25): 
+            self.can.create_line(0,self.PAS*i,windows_Size,self.PAS*i,fill='black')      # on cree manuellement des lignes horizontales  
+            self.can.create_line(self.PAS*i , 0,self.PAS*i,windows_Size,fill='black')    # on cree manuellement des lignes verticales 
+
+            for j in range(25):         
+                centre = (X0+i*self.PAS, Y0+j*self.PAS)
+                if target ==2:
+                    if (i,j)==self.agent.getPosition():
+                        self.agentText = self.can.create_text(centre, text = "I")
+                    elif (i,j) in YFoodPatch:
+                        b = self.Ypatch(i,j)
+                        if self.environment[i][j]==2 and b:
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "$", fill='red')
+                        elif self.environment[i][j]==2 and not(b):
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "Y", fill='blue')
+                        elif self.environment[i][j]!=2 and b:
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "Y", fill='red')
+                        elif self.environment[i][j]!=2 and not(b):
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "Y", fill='black')
+                    elif (i,j) in OFoodPatch:
+                        b = self.Opatch(2,i,j)
+                        if self.environment[i][j]==2 and b:
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "$", fill='red')
+                        elif self.environment[i][j]==2 and not(b):
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "O", fill='blue')
+                        elif self.environment[i][j]!=2 and b:
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "O", fill='red')
+                        elif self.environment[i][j]!=2 and not(b):
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "O", fill='black')
+                    elif (i,j) in XFoodPatch:
+                        b = self.Xpatch(2,i,j)
+                        if self.environment[i][j]==2 and b:
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "$", fill='red')
+                        elif self.environment[i][j]==2 and not(b):
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "X", fill='blue')
+                        elif self.environment[i][j]!=2 and b:
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "X", fill='red')
+                        elif self.environment[i][j]!=2 and not(b):
+                            self.foodText[(i,j)] = self.can.create_text(centre, text = "X", fill='black')
+                    elif self.environment[i][j]==2 and not ((i,j) in allFoodPatch) :
+                        self.foodText[(i,j)] = self.can.create_text(centre, text = "$")
+                        
+                if target == 1:
+                    if (i,j)==self.agent.getPosition():
+                        self.agentText = self.can.create_text(centre, text = "I")
+                    elif (i,j) in OEnnemyPatch:
+                        b = self.Opatch(1,i,j)
+                        if (i,j) in [i.getPosition() for i in self.ennemies] and b:
+                            self.ennemyText.append(self.can.create_text(centre, text = "E", fill = 'red'))
+                        elif (i,j) in [i.getPosition() for i in self.ennemies] and not(b):
+                            self.ennemyText.append(self.can.create_text(centre, text = "O", fill = 'blue'))
+                        elif not((i,j) in [i.getPosition() for i in self.ennemies]) and b:
+                            self.ennemyText.append(self.can.create_text(centre, text = "O", fill = 'red'))
+                        elif not((i,j) in [i.getPosition() for i in self.ennemies]) and not(b):
+                            self.ennemyText.append(self.can.create_text(centre, text = "O", fill = 'black'))
+                    elif (i,j) in XEnnemyPatch:
+                        b = self.Xpatch(1,i,j)
+                        if (i,j) in [i.getPosition() for i in self.ennemies] and b:
+                            self.ennemyText.append(self.can.create_text(centre, text = "E", fill = 'red'))
+                        elif (i,j) in [i.getPosition() for i in self.ennemies] and not(b):
+                            self.ennemyText.append(self.can.create_text(centre, text = "X", fill = 'blue'))
+                        elif not((i,j) in [i.getPosition() for i in self.ennemies]) and b:
+                            self.ennemyText.append(self.can.create_text(centre, text = "X", fill = 'red'))
+                        elif not((i,j) in [i.getPosition() for i in self.ennemies]) and not(b):
+                            self.ennemyText.append(self.can.create_text(centre, text = "O", fill = 'black'))
+                    elif ((i,j) in [i.getPosition() for i in self.ennemies]) and not ((i,j) in allEnnemyPatch) :
+                        self.ennemyText.append(self.can.create_text(centre, text = "E"))
+                if target ==0:
+                    if (i,j)==self.agent.getPosition():
+                        self.agentText = self.can.create_text(centre, text = "I")
+                    elif (i,j) in ObstaclesPatch:
+                        b = self.opatch(i,j)
+                        if self.environment[i][j]==1 and b:
+                            self.can.create_text(centre, text = "O", fill='red')
+                        elif self.environment[i][j]==1 and not(b):
+                            self.can.create_text(centre, text = "o", fill = 'blue')
+                        elif self.environment[i][j]!=1 and b:
+                            self.can.create_text(centre, text = "o", fill = 'red')
+                        elif self.environment[i][j]!=1 and not(b):
+                            self.can.create_text(centre, text = "o", fill = 'black')
+                    elif self.environment[i][j] == 1:
+                        self.can.create_text(centre, text = "O") 
+
+        
+        #create the HP bar in the bottom
+        self.life = []  # all rectangle for the life 
+
+        self.can_life=tkinter.Canvas(self.grille,bg="light gray",height=25, width=200)
+        self.can_life.pack(side = "left") 
+
+        for i in range(1,200,25): 
+            self.life.append(self.can_life.create_rectangle( i, 0, i+25, 25, fill="red", width = 0.5))  
 
     def deleteFood(self,x,y): 
         """
@@ -477,9 +595,12 @@ if __name__ == '__main__':
         (m,l) = test_network("save.h5")
         print("nourriture obtenue:", l)
         print("moyenne:", m)"""
-    for i in range(5):
-        execute_simulation_learning("save.h5",display=True)
-
-    
+    #for i in range(5):
+    #    execute_simulation_learning("save.h5",display=True)
+    nn = NeuralNetwork(5)
+    test = State(obstacles, nn, display=False)
+    #test.agent.setPosition(x=12, y=5)
+    test.print_sensors(0)
+    test.grille.mainloop()
 
     
