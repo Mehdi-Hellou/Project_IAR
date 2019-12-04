@@ -312,7 +312,7 @@ class State:
                         elif not((i,j) in [i.getPosition() for i in self.ennemies]) and b:
                             self.ennemyText.append(self.can.create_text(centre, text = "X", fill = 'red'))
                         elif not((i,j) in [i.getPosition() for i in self.ennemies]) and not(b):
-                            self.ennemyText.append(self.can.create_text(centre, text = "O", fill = 'black'))
+                            self.ennemyText.append(self.can.create_text(centre, text = "X", fill = 'black'))
                     elif ((i,j) in [i.getPosition() for i in self.ennemies]) and not ((i,j) in allEnnemyPatch) :
                         self.ennemyText.append(self.can.create_text(centre, text = "E"))
                 if target ==0:
@@ -385,7 +385,7 @@ class State:
         if self.display:
             if self.end:
                 self.restart_simulation()
-            self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+            self.grille.after(3000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
 
             
 
@@ -406,7 +406,7 @@ class State:
                     self.end = True
 
         if self.display and not(self.end):# if it's not the end we make move again the ennemies 
-            self.grille.after(1000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+            self.grille.after(3000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
         self.print_grid_line() 
@@ -452,6 +452,8 @@ class State:
         Backpropagate the errors delta U given the previous utility Umax computed during the first step
         and the Utility max given the current state and the different action performed   
         """ 
+
+        ######################### Configure the sensor inputs given the movement of the agent ######################### 
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
         #print(self.agent.get_previousAction())
         sensors_result_N = np.asarray(self.agent.sensors(self, x = 0, y = -1, direction=3)).astype(int)
@@ -468,7 +470,8 @@ class State:
         input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
 
         l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
-        
+        ######################### Configure the sensor inputs given the movement of the agent #########################
+
         print("The reward in baskpropagating is %f" %(self.agent.reward) ) 
         parameters = [self.gamma, self.agent.reward]
 
@@ -532,9 +535,11 @@ class State:
         return self.agent.sensors(self, x = 0, y = -1, environment = env_move_E, positionEnnemies = positionEnnemies)
 
     def actionSelector(self): 
-        s = np.sum([np.exp(k/self.Temp) for k in self.U_list])
+        s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
-        action_proba =[np.exp(m/self.Temp)/s for m in self.U_list]
+        action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
+        print(self.U_list)
+        print(action_proba)
         return action_proba
 
     def save_utility_network(self,path_save): 
@@ -548,7 +553,9 @@ class State:
 def execute_simulation_learning(path_to_nn, display=False): 
     if not(os.path.isfile(path_to_nn)):
         nn = NeuralNetwork(30)
+        print("the file %s doesn't exist!"%(path_to_nn))
     else: 
+        print("the file %s exist!"%(path_to_nn))
         nn = NeuralNetwork(path_load = path_to_nn)
 
     experiment = State(obstacles, nn, display)
@@ -595,12 +602,12 @@ if __name__ == '__main__':
         (m,l) = test_network("save.h5")
         print("nourriture obtenue:", l)
         print("moyenne:", m)"""
-    #for i in range(5):
-    #    execute_simulation_learning("save.h5",display=True)
-    nn = NeuralNetwork(5)
+    for i in range(5):
+        execute_simulation_learning("save.h5",display=True)
+    """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
-    #test.agent.setPosition(x=12, y=5)
-    test.print_sensors(0)
-    test.grille.mainloop()
+    test.agent.setPosition(x=12, y=5)
+    test.print_sensors(1)
+    test.grille.mainloop()"""
 
     
