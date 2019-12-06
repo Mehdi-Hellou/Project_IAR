@@ -228,6 +228,7 @@ class Agent(object):
             (i,j) = oriente(i0,j0, direction)
             result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
 
+        #print("résultat du senseur", result)
         return result
         #return positionSensorY, positionSensorO, positionSensorX
     
