@@ -53,25 +53,23 @@ class NeuralNetwork(object):
 
     def save_on_file(self,path):
         self.model.save(path)
-        
-    def grad(self, Uprime, U):
-        
-        with tf.GradientTape() as tape:
-            loss_value = self.loss(Uprime, U)
-        return loss_value, tape.gradient(loss_value, self.model.trainable_variables)
 
     @tf.function
-    def _train_one_step(self, X, y,parameters):
+    def _train_one_step(self, X, Xtarget,parameters, end):
         """
         X : list of inputs of differents action that could be performed 
-        """
-        r2 = parameters[2]
-        r = parameters[1] 
+        """        
+        r = parameters[1]
         gamma = parameters[0]
-
         with tf.GradientTape() as tape:
-            yp = (self.predict(X) * gamma + r2) * gamma + r            
-            loss = customLoss(yp,y)
+            yp = self.predict(X)
+
+            if end:
+                ytarget = r
+            else: 
+                ytarget = self.predict(Xtarget) * gamma + r
+            
+            loss = customLoss(ytarget,yp)
         #print(loss)
         gradients = tape.gradient(loss, self.model.trainable_variables)
         l = self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
@@ -86,9 +84,7 @@ def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):
     else:
         network = NeuralNetwork(n_hidden = nb_hidden)
     output = network.predict(input_nn)
-    print(output)
-    #network._train_one_step([input_nn],output,parameters)
-    network.model.fit([input_nn],output)
+    network._train_one_step([input_nn],output,parameters,False)
     if path_save != None:
         network.save_on_file(path_save)
     return output

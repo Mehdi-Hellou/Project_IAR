@@ -49,7 +49,7 @@ class State:
         for (x,y) in obstacles:
             self.environment[x][y] = 1
         self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]        
-        self.agent = agt.Agent(13,18, 40)
+        self.agent = agt.Agent(12,18, 40)
         
         for i in range(15):
             x = random.randint(0,24)
@@ -63,8 +63,8 @@ class State:
 
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
-        self.gamma = 0.95  # the parameters for the learning
-        self.Temp = 1/40 # The temperature for the stochastic action selector 
+        self.gamma = 0.9  # the parameters for the learning
+        self.Temp = 1/60 # The temperature for the stochastic action selector 
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.totalFood = 0 #food eaten during the simulation
         self.grille = None
@@ -74,6 +74,8 @@ class State:
         self.can_life = None
         self.life = None
         self.ennemyText=None
+        self.killed = False
+        self.dead = False
         self.display = display
         if self.display:
             self.initiate_simulation()
@@ -361,6 +363,7 @@ class State:
         if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
             print("Catch by the ennemies !!!")
             self.agent.reward = -1.0
+            self.killed = True
             self.end = True
 
         elif self.lookupFood(x,y):
@@ -385,7 +388,7 @@ class State:
         if self.display:
             if self.end:
                 self.restart_simulation()
-            self.grille.after(3000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+            self.grille.after(2000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
 
             
 
@@ -398,20 +401,20 @@ class State:
             r = random.uniform(0,1)
             if r > 0.2 : 
                 if (self.ennemyText != None) and (self.PAS !=None) and (self.can!=None):
-                    ennemy.strategy(self.ennemyText[i], self.PAS, self.can)
+                    ennemy.strategy( self.ennemyText[i], self.PAS, self.can)
                 else:
                     ennemy.strategy()
-                
                 if self.agent.getPosition() == ennemy.getPosition(): # if the movement of the ennemy is in the agent's position it is the end of the simulation
+                    self.killed = True
                     self.end = True
 
         if self.display and not(self.end):# if it's not the end we make move again the ennemies 
-            self.grille.after(3000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+            self.grille.after(2000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
-        self.print_grid_line() 
+        self.print_grid_line()
+        self.moveAgent(learning=True) 
         self.moveEnnemy()
-        self.moveAgent(learning=True)
         self.grille.mainloop() 
 
     def restart_simulation(self):
@@ -425,30 +428,30 @@ class State:
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
 
         # Get the results from the sensors according the different movement executed by the agent 
-        sensors_result_N = np.asarray(self.agent.sensors(self, direction=3)).astype(int)
+        """sensors_result_N = np.asarray(self.agent.sensors(self, direction=3)).astype(int)
         sensors_result_O = np.asarray(self.agent.sensors(self, direction=2)).astype(int)
         #np.asarray(self.rotationEnvironment(270)).astype(int)
         sensors_result_S = np.asarray(self.agent.sensors(self, direction=1)).astype(int)
         #np.asarray(self.rotationEnvironment(180)).astype(int)
         sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)
-        #np.asarray(self.rotationEnvironment(90)).astype(int)
-#         print("senseur nord" , list(sensors_result_N))
-#         print("senseur ouest" , list(sensors_result_O))
-#         print("senseur sud" , list(sensors_result_S))
-#         print("senseur est", list(sensors_result_E))
+        #np.asarray(self.rotationEnvironment(90)).astype(int)"""
+        sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
+        sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
+        sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
+        sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
         input_nn_S = np.concatenate((sensors_result_S,input_nn))    # input when the South action is performed
         input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
 
-        U_list = [self.nn.predict(input_nn_E.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 0),\
-                  self.nn.predict(input_nn_S.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 1),\
-                  self.nn.predict(input_nn_O.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 2),\
-                  self.nn.predict(input_nn_N.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 3)]
-                  
-        print("The reward is %f" %(self.agent.reward))
-        self.U_list = [U_list[i]*self.gamma + self.agent.reward for i in range(4) ] #The utility according the different acts performed    
+        self.input_list =   [input_nn_E.reshape(1,145),
+                             input_nn_S.reshape(1,145),
+                             input_nn_O.reshape(1,145),
+                             input_nn_N.reshape(1,145)]
+
+        U_list = [self.nn.predict(i) for i in self.input_list ]      
+        self.U_list = [U_list[i] for i in range(4) ] #The utility according the different acts performed    
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
 
     def backpropagating(self): 
@@ -460,17 +463,17 @@ class State:
         ######################### Configure the sensor inputs given the movement of the agent ######################### 
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
         #print(self.agent.get_previousAction())
-        sensors_result_N = np.asarray(self.agent.sensors(self,  direction=3)).astype(int)
+        """sensors_result_N = np.asarray(self.agent.sensors(self,  direction=3)).astype(int)
         sensors_result_O =np.asarray(self.agent.sensors(self, direction=2)).astype(int) 
         #np.asarray(self.rotationEnvironment(270)).astype(int)
         sensors_result_S = np.asarray(self.agent.sensors(self, direction=1)).astype(int) 
         #np.asarray(self.rotationEnvironment(180)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int) 
+        sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)"""
+        sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
+        sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
+        sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
+        sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)
         #np.asarray(self.rotationEnvironment(90)).astype(int)
-#         print("senseur nord" , list(sensors_result_N))
-#         print("senseur ouest" , list(sensors_result_O))
-#         print("senseur sud" , list(sensors_result_S))
-#         print("senseur est", list(sensors_result_E))
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
@@ -482,19 +485,27 @@ class State:
 
         print("The reward in baskpropagating is %f" %(self.agent.reward) ) 
         parameters = [self.gamma, self.agent.reward]
-
-        U_list_y = [self.nn.predict(input_nn_E.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 0),\
-                  self.nn.predict(input_nn_S.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 1),\
-                  self.nn.predict(input_nn_O.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 2),\
-                  self.nn.predict(input_nn_N.reshape(1,145))*self.gamma + self.getRewardAgent(direction = 3)]
-
-        index_input_maxU = np.argmax(U_list_y)   # the input given for the backprogating is the one with the maximum utility
-
         Ui = self.U_list[self.agent.get_previousAction()[-1]]
+        
+        
+        if not self.end:
+            U_list_y = [self.nn.predict(input_nn_E.reshape(1,145)),\
+                  self.nn.predict(input_nn_S.reshape(1,145)),\
+                  self.nn.predict(input_nn_O.reshape(1,145)),\
+                  self.nn.predict(input_nn_N.reshape(1,145))]        
+            index_input_maxU = np.argmax(U_list_y)   # the input given for the backprogating is the one with the maximum utility
+            input_target = l_input[index_input_maxU]
+            uprime = self.agent.reward + self.gamma * np.max(U_list_y)    # input of the utility with the best value
+        
+        else:
+            uprime = self.agent.reward
+            input_target = None
+        
+        index = self.agent.get_previousAction()[-1]
+        input_nn = self.input_list[index]
+        
+        self.nn._train_one_step(input_nn,input_target,parameters, self.end)
 
-        parameters.append(self.getRewardAgent(direction = index_input_maxU))   # reward related to the state with the best utility
-        input_nn = l_input[index_input_maxU].reshape(1,145)    # input of the utility with the best value
-        self.nn._train_one_step(input_nn,Ui,parameters)
 
     def getRewardAgent(self,direction = None): 
         """
@@ -546,8 +557,8 @@ class State:
         s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
         action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
-        print(self.U_list)
-        print(action_proba)
+        #print(np.array(self.U_list))
+        #print(action_proba)
         return action_proba
 
     def save_utility_network(self,path_save): 
@@ -568,16 +579,15 @@ def execute_simulation_learning(path_to_nn, display=False):
 
     experiment = State(obstacles, nn, display)
 
-    if not(display):## if tkinter is desactivated, we need to create the loop with a while condition
+    if not display: 
         while not(experiment.end):
             experiment.moveEnnemy()
-            experiment.moveAgent(True)
-
+            experiment.moveAgent(learning = True)
     experiment.save_utility_network(path_to_nn)
 
 def train_network(path_save_nn): 
     for i in range(20):
-        print("----------------------------------------%d---------------------------------------------" % i)
+        print("----------------------------------------train%d---------------------------------------------" % i)
         execute_simulation_learning(path_save_nn)
         
 
@@ -590,28 +600,39 @@ def execute_simulation_no_learning_no_display(path_to_nn = None):
     while not(experiment.end):
         experiment.moveEnnemy()
         experiment.moveAgent()
-    return experiment.totalFood
+    return (experiment.totalFood,experiment.dead, experiment.killed)
 
 def test_network(path_to_nn):
     results = [0 for i  in range(50)]
+    nb_killed = 0
+    nb_dead = 0
     for i in range(50):
-        print("----------------------------------------%d---------------------------------------------" % i)
-        results[i] = execute_simulation_no_learning_no_display(path_to_nn)
-    mean = sum(results)/50
-    return (mean,results)
+        print("----------------------------------------test%d---------------------------------------------" % i)
+        (results[i],dead,killed) = execute_simulation_no_learning_no_display(path_to_nn)
+        nb_dead+=int(dead)
+        nb_killed+= int(killed)
+    mean = sum(results)/51
+    return (mean,results,nb_dead,nb_killed)
 
 if __name__ == '__main__':
     # start the experiment 
-    """for i in range(15):
-        train_network("save.h5")
+    for i in range(7): # the number of experiment
+    
+        for j in range(15): # there are 300 training during one experiment 
+            train_network("save.h5")
+            #food = execute_simulation_no_learning_no_display()
 
-        food = execute_simulation_no_learning_no_display()
-        print("food = ", food)
-        (m,l) = test_network("save.h5")
-        print("nourriture obtenue:", l)
-        print("moyenne:", m)"""
-    for i in range(5):
-        execute_simulation_learning("save.h5",display=True)
+            #print("food = ", food)
+
+            (m,l,d,k) = test_network("save.h5")
+            print("nourriture obtenue:", l)
+            print("moyenne:", m)
+            
+            namefile ="result{}.txt".format(i) 
+            with open(namefile, "a") as f:
+                f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k)) 
+    """for i in range(5):
+        execute_simulation_learning("save.h5",display=True)"""
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)

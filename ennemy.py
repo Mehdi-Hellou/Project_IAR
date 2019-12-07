@@ -12,7 +12,7 @@ class Ennemy(object):
         self.x = x
         self.environment = environment
 
-    def move(self, direction, ennemyText, pas, canvas = None):
+    def move(self, direction, ennemyText, pas, canvas):
         """
         direction : direction of the movement (Est,West,North,South)
         state : the environment of dynamic  
@@ -20,25 +20,25 @@ class Ennemy(object):
         x,y = self.getPosition() 
         # Bouger vers le Nord 
         if direction == 3: 
-            if self.environment.lookupObstacles(x, y - 1)==False and not(self.environment.lookupEnnemies(x,y-1)): 
+            if self.environment.lookupObstacles(x, y - 1)==False: 
                 y = y - 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, 0, -pas)
         # Bouger vers l'Ouest
         elif direction == 2:
-            if self.environment.lookupObstacles(x - 1 ,y)==False and not(self.environment.lookupEnnemies(x-1,y)): 
-                x = x - 2
+            if self.environment.lookupObstacles(x - 1 ,y)==False: 
+                x = x - 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None):
                     canvas.move(ennemyText, -pas, 0)            
         # Bouger vers le Sud
         elif direction == 1: 
-            if self.environment.lookupObstacles(x,y + 1)==False and not(self.environment.lookupEnnemies(x,y+1)):
+            if self.environment.lookupObstacles(x,y + 1)==False:
                 y = y + 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, 0, pas)
         # Bouger vers l'Est
         elif direction == 0: 
-            if self.environment.lookupObstacles(x + 1,y)==False and not(self.environment.lookupEnnemies(x+1,y)):
+            if self.environment.lookupObstacles(x + 1,y)==False:
                 x = x + 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     canvas.move(ennemyText, pas, 0)
@@ -61,7 +61,7 @@ class Ennemy(object):
         P = [0.0 for i in range(4)]
 
         for p in range(4): 
-            xprime,yprime = self.move(p,None, "", 0) # the potential ennemy position after have execute the move p
+            xprime,yprime = self.move(p, None, None, None) # the potential ennemy position after have execute the move p
 
             if x==xprime and y==yprime:  # if the movement result in a collision with an obstacle 
                 P[p] = 0.0
@@ -71,7 +71,6 @@ class Ennemy(object):
         Pa = [i/np.sum(P) for i in P]  # the probability for each action possible
 
         move = np.argmax(Pa)    # we took the one with the best proba
-        
         x,y = self.move(move, ennemyText, pas, canvas)
         self.setPosition(x,y)
 

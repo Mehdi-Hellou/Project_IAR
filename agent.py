@@ -44,7 +44,7 @@ class Agent(object):
         self.y = y
         self.energy = energy
         self.coarseEnergy = [1 for i in range(16)]   # the coarse coding of the energy for the Neural Network 
-        self.previousAction = [-1 for i in range(4)] # the 4 previous actions made by the agent 
+        self.previousAction = [0 for i in range(4)] # the 4 previous actions made by the agent 
         self.previous_collision = False # if the agent collide with an obstacle in the previous
         self.reward = 0.0
         return
@@ -68,8 +68,9 @@ class Agent(object):
         self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
 
         if end and state != None: # if the agent hasn't remained energy  
+            state.dead = True
             state.end = True  # we restart the simulation
-        #print(self.coarseEnergy)
+        print(self.coarseEnergy)
         return 
 
     def get_energy_coarsed(self): 
@@ -197,9 +198,8 @@ class Agent(object):
             (x,y)=state.agent.getPosition()
 
         else:
-            (x,y)=self.getPosition()
-            x += self.x
-            y += self.y  
+            (x0,y0) = self.getPosition()
+            (x,y)=(x0+x,y0+y)
 
         #food
         for (i0,j0) in Yfood:
@@ -228,9 +228,37 @@ class Agent(object):
             (i,j) = oriente(i0,j0, direction)
             result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
 
-        #print("résultat du senseur", result)
         return result
         #return positionSensorY, positionSensorO, positionSensorX
+
+    def sensors_without_rot(self, state, direction=3):
+        #return the vector of detection
+        #pour les directions: 3= nord, 2=ouest, 1=sud, 0 = est
+        result=[]
+        
+        (x,y) = self.move_simulated(state,direction)
+        #food
+        for (i,j) in Yfood:
+            result.append(state.Ypatch(x+i, y+j))
+            #positionSensorY.append((x+i, y+j))
+        for (i,j) in Ofood: 
+            result.append(state.Opatch(2, x+i, y+j))
+            #positionSensorO.append((x+i, y+j,environment))
+        for (i,j) in Xfood:
+            result.append(state.Xpatch(2, x+i, y+j))
+            #positionSensorX.append((x+i, y+j,environment))
+        #ennemies
+        for (i,j) in Oennemies:
+            result.append(state.Opatch(1, x+i, y+j))
+            #positionSensorO.append((x+i,y+j,environment))
+        for (i,j) in Xennemies:
+            result.append(state.Xpatch(1, x+i, y+j))
+            #positionSensorX.append((x+i,y+j,environment))
+        #obstacles
+        for (i,j) in oobstacles:
+            result.append(state.opatch(x+i, y+j))
+
+        return result
     
     
             
