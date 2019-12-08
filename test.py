@@ -166,7 +166,7 @@ class testState(unittest.TestCase):
         testgrid.agent.setPosition(x_o,y_o)
         self.assertTrue(np.array_equal(sensors_O_sim, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
         
-        
-        
+        sensor = np.asarray(testgrid.agent.sensors_without_rot(testgrid)).astype(int)
+        self.assertTrue(np.array_equal(sensor, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
 if __name__ == '__main__':
     unittest.main()

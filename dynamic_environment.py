@@ -63,7 +63,7 @@ class State:
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
         self.gamma = 0.9  # the parameters for the learning
-        self.Temp = 1/60 # The temperature for the stochastic action selector 
+        self.Temp = 1/200 # The temperature for the stochastic action selector 
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.totalFood = 0 #food eaten during the simulation
         self.grille = None
@@ -414,7 +414,7 @@ class State:
 
     def initiate_simulation(self): 
         self.print_grid_line()
-        self.moveAgent(learning=True) 
+        self.moveAgent(learning=False) 
         self.moveEnnemy()
         self.grille.mainloop() 
 
@@ -497,7 +497,7 @@ class State:
 
             index_input_maxU = np.argmax(U_list_y)   # the input given for the backprogating is the one with the maximum utility
             input_target = l_input[index_input_maxU]
-            """sensor = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
+            """sensor = np.asarray(self.agent.sensors_without_rot(self)).astype(int)
             input_target = np.concatenate((sensor,input_nn)).reshape(1,145)"""
             uprime = self.agent.reward + self.gamma * self.nn.predict(input_target)    # input of the utility with the best value
         
@@ -608,8 +608,8 @@ class State:
             # if done, make our target reward
             target = reward
             if not(y==None):
-                  # predict the future discounted reward
-                  target = reward + self.gamma * self.nn.predict(next_state)
+                # predict the future discounted reward
+                target = reward + self.gamma * self.nn.predict(next_state)
             
             # Train the Neural Net with the state and next state input
             self.nn.train(state,target)
@@ -671,8 +671,6 @@ def execute_simulation_learning(path_to_nn, display=False):
         while not(experiment.end):
             experiment.moveEnnemy()
             experiment.moveAgent(learning = False)
-
-    #experiment.save_utility_network(path_to_nn)
 
 def train_network(path_save_nn): 
     for i in range(20):

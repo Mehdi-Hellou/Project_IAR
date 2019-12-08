@@ -5,7 +5,14 @@ import time
 
 
 if __name__ == '__main__': 
-    nn = NeuralNetwork(30,lr=0.1)
+
+    path_to_nn = "Utility_network/NN.h5"
+    if os.path.isfile(path_to_nn):
+        print("The path exist !")
+        nn = NeuralNetwork(30,path_load =path_to_nn, lr=0.1)
+    else: 
+        print("The path doesn't exist !")
+        nn = NeuralNetwork(30, lr=0.1)
     env = State(obstacles, nn, display = False)
 
     test = False
@@ -33,11 +40,11 @@ if __name__ == '__main__':
                 result.append(sum(mean_food)/50)
                 mean_food = []
 
-        with open("Result/result2.txt", "a") as f:
+        with open("Result/result.txt", "a") as f:
             f.write("experiment {} mean food : {} .\n".format(i+1,result))
             result = []
 
-    env.save_utility_network("Utility_network/NN_version2.h5")
+    env.save_utility_network("Utility_network/NN.h5")
     
     """env.display = True
     env.reset(True,mean_food)

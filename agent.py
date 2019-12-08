@@ -236,7 +236,7 @@ class Agent(object):
         #pour les directions: 3= nord, 2=ouest, 1=sud, 0 = est
         result=[]
         
-        if direction == None: 
+        if direction != None: 
             (x,y) = self.move_simulated(state,direction)
         else:
             (x,y) = self.getPosition()
