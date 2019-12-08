@@ -231,12 +231,16 @@ class Agent(object):
         return result
         #return positionSensorY, positionSensorO, positionSensorX
 
-    def sensors_without_rot(self, state, direction=3):
+    def sensors_without_rot(self, state, direction=None):
         #return the vector of detection
         #pour les directions: 3= nord, 2=ouest, 1=sud, 0 = est
         result=[]
         
-        (x,y) = self.move_simulated(state,direction)
+        if direction == None: 
+            (x,y) = self.move_simulated(state,direction)
+        else:
+            (x,y) = self.getPosition()
+            
         #food
         for (i,j) in Yfood:
             result.append(state.Ypatch(x+i, y+j))

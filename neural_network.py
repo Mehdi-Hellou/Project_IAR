@@ -2,27 +2,30 @@ import sys
 import tensorflow as tf
 import numpy as np
 
-@tf.function
+
 def new_sigmoid(x):
     """
     Activate function
     """ 
     return (1/(1+tf.math.exp(-x))) - 0.5
 
-@tf.function
-def customLoss(y, y0): 
+def customLoss(yp, y): 
     """
     fonction loss 
     """
-    return (y - y0)
+    return abs(y - yp)
+
+def derivate_sigmoid(x): 
+    return (1/(1+tf.math.exp(-x)))*(1-(1/(1+tf.math.exp(-x))))
 
 class NeuralNetwork(object):
     """docstring for NeuralNetwork"""
-    def __init__(self, n_hidden = None, path_load = None):
+    def __init__(self,n_hidden = None, path_load = None, lr = 0.1):
         if (n_hidden == None) and (path_load == None ):
             raise ValueError("Un argument est nécessaire")
         super(NeuralNetwork, self).__init__()
         if path_load == None:
+            print("New NN")
             self.model = tf.keras.models.Sequential()
 
             #add the the input layer 
@@ -32,27 +35,38 @@ class NeuralNetwork(object):
             init = tf.constant_initializer(0.1*np.random.rand(145,n_hidden))
             self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
 
-            init = tf.constant_initializer(0.1*np.random.rand(n_hidden,n_hidden))
+            """init = tf.constant_initializer(0.1*np.random.rand(n_hidden,n_hidden))
             self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
 
             init = tf.constant_initializer(0.1*np.random.rand(n_hidden,n_hidden))
-            self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
+            self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))"""
 
+            #Add the output layers
             init = tf.constant_initializer(0.1*np.random.rand(n_hidden,1))
             self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
             self.model.compile(loss=customLoss)           
         else:
+            print("Same NN")
             self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
         
-        self.optimizer = tf.keras.optimizers.SGD(learning_rate=0.3, momentum = 0.9 )
+        self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
         
 
-    @tf.function
     def predict(self,x): 
         return self.model(x)
 
     def save_on_file(self,path):
         self.model.save(path)
+
+    def grad(self, inputs, target):
+        """
+        """
+        with tf.GradientTape() as tape:
+            yp = self.predict(inputs)
+            loss_value = customLoss(yp,target)
+        print("the prediction is %s" %(yp))
+        print("the target is %s" %(target))
+        return loss_value, tape.gradient(loss_value, self.model.trainable_variables)
 
     @tf.function
     def _train_one_step(self, X, Xtarget,parameters, end):
@@ -71,11 +85,25 @@ class NeuralNetwork(object):
             
             loss = customLoss(ytarget,yp)
         #print(loss)
+        print(tf.executing_eagerly())
         gradients = tape.gradient(loss, self.model.trainable_variables)
-        l = self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
+        self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
+        tf.print("Step: {},         Loss: {}".format(int(self.optimizer.iterations),loss))
         d = dict(loss=loss)
-        #tf.print(yp[0], loss)
-#
+        #tf.print(yp[0], loss)        
+
+    def train_one_step_other(self, X, target):
+        """
+        X : input for the prediction
+        target : the target label 
+
+        """
+        loss , gradients = self.grad(X,target) 
+        self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
+        tf.print("Step: {},         Loss: {}".format(self.optimizer.iterations.numpy(),loss))
+    
+    def train(self,X,target): 
+        self.model.fit(X,target)
 
 def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):
     #les fichiers de sauvegarde sont des .h5
@@ -84,17 +112,24 @@ def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):
     else:
         network = NeuralNetwork(n_hidden = nb_hidden)
     output = network.predict(input_nn)
-    network._train_one_step([input_nn],output,parameters,False)
+    print(input_nn)
+    np.random.seed(5)
+    input_nn2 = np.random.choice(2, size = 145)
+    input_nn2 = input_nn.reshape(1,145)
+    target = -0.0000 + 0.9*network.predict(input_nn2) 
+    network.train_one_step_other(input_nn,target)
+    print(input_nn)
+    print(target)
+    network.train(input_nn, target)
     if path_save != None:
         network.save_on_file(path_save)
     return output
 
 
 if __name__ == '__main__':
-    input_nn = np.random.randint(145, size = 145)
+    input_nn = np.random.choice(2, size = 145)
     input_nn = input_nn.reshape(1,145)
-    output = try_nn(5, input_nn, [0.4,0.9,0.5],path_load = "save.h5", path_save = "save.h5")
-    print(float(output))
+    output = try_nn(5, input_nn, [0.4,0.9],path_load = "save.h5", path_save = "save.h5")
     #model = NeuralNetwork(5)
 
 #     output = model.predict(input_nn) 
