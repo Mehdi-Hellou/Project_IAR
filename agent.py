@@ -205,31 +205,25 @@ class Agent(object):
         for (i0,j0) in Yfood:
             (i,j) = oriente(i0,j0, direction)
             result.append(state.Ypatch(x+i, y+j, environment, positionEnnemies))
-            #positionSensorY.append((x+i, y+j))
         for (i0,j0) in Ofood: 
             (i,j) = oriente(i0,j0, direction)
             result.append(state.Opatch(2, x+i, y+j,environment, positionEnnemies))
-            #positionSensorO.append((x+i, y+j,environment))
         for (i0,j0) in Xfood:
             (i,j) = oriente(i0,j0, direction)
             result.append(state.Xpatch(2, x+i, y+j,environment, positionEnnemies))
-            #positionSensorX.append((x+i, y+j,environment))
         #ennemies
         for (i0,j0) in Oennemies:
             (i,j) = oriente(i0,j0, direction)
             result.append(state.Opatch(1, x+i, y+j,environment, positionEnnemies))
-            #positionSensorO.append((x+i,y+j,environment))
         for (i0,j0) in Xennemies:
             (i,j) = oriente(i0,j0, direction)
             result.append(state.Xpatch(1, x+i, y+j,environment, positionEnnemies))
-            #positionSensorX.append((x+i,y+j,environment))
         #obstacles
         for (i0,j0) in oobstacles:
             (i,j) = oriente(i0,j0, direction)
             result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
 
         return result
-        #return positionSensorY, positionSensorO, positionSensorX
 
     def sensors_without_rot(self, state, direction=None):
         #return the vector of detection

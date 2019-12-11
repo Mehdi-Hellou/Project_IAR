@@ -89,10 +89,10 @@ class testState(unittest.TestCase):
     
     #test fonction rotations 
     def testRotation(self):
-        testgrid= env.State([(5,5),(8,5),(5,7)],nn)
-        env_90 = env.State([(5,5),(8,5),(5,7)],nn)
-        env_180 = env.State([(5,5),(8,5),(5,7)],nn)
-        env_270 = env.State([(5,5),(8,5),(5,7)],nn)
+        testgrid= env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
+        env_90 = env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
+        env_180 = env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
+        env_270 = env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
 
         # We delete all the case whit food since it is plot randomly
         for i in range(env.width):
@@ -106,23 +106,32 @@ class testState(unittest.TestCase):
                 if env_270.environment[i][j] == 2: 
                     env_270.environment[i][j]=0
 
+        #testgrid.print_grid_line()
+        #testgrid.grille.mainloop()
         e = np.asarray(testgrid.environment)
         
         e = np.rot90(e)
         env_90.environment = e.tolist() # environment with a rotation of 90
         env_90.ennemies = [Ennemy(18,6,env_90.environment), Ennemy(22,12,env_90.environment), Ennemy(18,12,env_90.environment), Ennemy(18,18,env_90.environment)]
 
+        #env_90.print_grid_line()
+        #env_90.grille.mainloop()
+
         e = np.rot90(e)
         env_180.environment = e.tolist() # environment with a rotation of 180
         env_180.ennemies = [Ennemy(18,18,env_180.environment), Ennemy(12,22,env_180.environment), Ennemy(12,18,env_180.environment), Ennemy(6,18,env_180.environment)]
+        #env_180.print_grid_line()
+        #env_180.grille.mainloop()
 
         e = np.rot90(e)
         env_270.environment = e.tolist() # environment with a rotation of 270
         env_270.ennemies = [Ennemy(6,18,env_270.environment), Ennemy(2,12,env_270.environment), Ennemy(6,12,env_270.environment), Ennemy(6,6,env_270.environment)]
+        #env_270.print_grid_line()
+        #env_270.grille.mainloop()
 
-        sensors_O = testgrid.rotationEnvironment(90) # sensors when the environment is rotated at 90 degrees
-        sensors_S = testgrid.rotationEnvironment(180) # sensors when the environment is rotated at 180 degrees
-        sensors_E = testgrid.rotationEnvironment(270) # sensors when the environment is rotated at 270 degrees
+        sensors_S = testgrid.rotationEnvironment(90) # sensors when the environment is rotated at 90 degrees
+        sensors_E = testgrid.rotationEnvironment(180) # sensors when the environment is rotated at 180 degrees
+        sensors_O = testgrid.rotationEnvironment(270) # sensors when the environment is rotated at 270 degrees
 
         sensors_env_90 = testgrid.agent.sensors( testgrid, x = 1, y = 0)
         sensors_env_270 = testgrid.agent.sensors( testgrid, x = -1, y = 0)
@@ -139,34 +148,16 @@ class testState(unittest.TestCase):
         testgrid= env.State([(5,5),(8,5),(5,7)],nn)
         (x,y) = testgrid.agent.getPosition()
         testgrid.agent.setPosition(10, 7)
-        sensors_N_sim = np.asarray(testgrid.agent.sensors_without_rot(testgrid,direction=3)).astype(int)
-        sensors_E_sim = np.asarray(testgrid.agent.sensors_without_rot(testgrid,direction=0)).astype(int)
-        sensors_S_sim = np.asarray(testgrid.agent.sensors_without_rot(testgrid,direction=1)).astype(int)
-        sensors_O_sim = np.asarray(testgrid.agent.sensors_without_rot(testgrid,direction=2)).astype(int)   
-        testgrid.print_grid_line()
-        testgrid.grille.mainloop()
+        sensors_N_sim = np.asarray(testgrid.agent.sensors(testgrid,direction=3)).astype(int)
+        sensors_E_sim = np.asarray(testgrid.agent.sensors(testgrid,direction=0)).astype(int)
+        sensors_S_sim = np.asarray(testgrid.agent.sensors(testgrid,direction=1)).astype(int)
+        sensors_O_sim = np.asarray(testgrid.agent.sensors(testgrid,direction=2)).astype(int)   
 
-        (x_n,y_n) = testgrid.agent.move(3,state = testgrid)
-        (x_e,y_e) = testgrid.agent.move(0,state = testgrid)
-        (x_s,y_s) = testgrid.agent.move(1,state = testgrid)
-        (x_o,y_o) = testgrid.agent.move(2,state = testgrid)
+        sensor_E_rot = np.asarray(testgrid.rotationEnvironment(270)).astype(int)
 
-        testgrid.agent.setPosition(x_s,y_s)        
-        self.assertTrue(np.array_equal(sensors_S_sim, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
+        print(sensors_E_sim)
+        print(sensor_E_rot)
 
-        testgrid.agent.setPosition(10, 7)
-        testgrid.agent.setPosition(x_n,y_n)
-        self.assertTrue(np.array_equal(sensors_N_sim, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
-
-        testgrid.agent.setPosition(10, 7)
-        testgrid.agent.setPosition(x_e,y_e)
-        self.assertTrue(np.array_equal(sensors_E_sim, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
-
-        testgrid.agent.setPosition(10, 7)
-        testgrid.agent.setPosition(x_o,y_o)
-        self.assertTrue(np.array_equal(sensors_O_sim, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
         
-        sensor = np.asarray(testgrid.agent.sensors_without_rot(testgrid)).astype(int)
-        self.assertTrue(np.array_equal(sensor, np.asarray(testgrid.agent.sensors(testgrid)).astype(int)))
 if __name__ == '__main__':
     unittest.main()

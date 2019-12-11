@@ -42,12 +42,12 @@ obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
 The main class to train and test the agent into the simulator 
 """
 class State:
-    def __init__(self, obstacles, nn, display = False):
+    def __init__(self, obstacles, nn, temperature=1/60, display = False):
         self.environment = [[ 0 for j in range(25)] for i in range(25)]
         #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely)
         for (x,y) in obstacles:
             self.environment[x][y] = 1
-        self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]        
+        self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]
         self.agent = agt.Agent(12,18, 40)
         
         for i in range(15):
@@ -63,7 +63,7 @@ class State:
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
         self.gamma = 0.9  # the parameters for the learning
-        self.Temp = 1/200 # The temperature for the stochastic action selector 
+        self.Temp = temperature # The temperature for the stochastic action selector 
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.totalFood = 0 #food eaten during the simulation
         self.grille = None
@@ -353,16 +353,16 @@ class State:
         if self.display:
             self.can.delete(self.foodText[(x,y)])  # delete the food text from the simulators 
                         
-    def moveAgent(self, learning = False):
+    def moveAgent(self, learning = False, event = None):
           
         getFood = False # boolean to know if the move of agent allowed him to get food or not 
 
-        if not(self.end): ## if the move an ennemy has collided with the agent in the previous loop, he can't move
+        if not(self.killed): ## if the move an ennemy has collided with the agent in the previous loop, he can't move
             self.agent.policy(self, self.agentText, self.PAS, self.can)  # perform the policy of the agent 
         
         x,y = self.agent.getPosition()
             
-        if self.lookupEnnemies(x,y): # if the movement of the agent is on an ennemie's position it is the end of the simulation
+        if self.lookupEnnemies(x,y) or self.killed: # if the movement of the agent is on an ennemie's position it is the end of the simulation
             print("Catch by the ennemies !!!")
             self.agent.reward = -1.0
             self.killed = True
@@ -388,9 +388,14 @@ class State:
             self.backpropagating()        
 
         if self.display:
-            #if self.end:
-                #self.restart_simulation()
+            if self.end:
+                self.end_simulation()
             self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+        else:
+            if not self.end: 
+                threading.Timer(0.0, self.moveAgent,[learning,event]).start() # use a timer to resuscribe to make move the agent faster than the ennemies 
+            else: 
+                event.set()
 
             
     def moveEnnemy(self):
@@ -402,15 +407,17 @@ class State:
             r = random.uniform(0,1)
             if r > 0.2 : 
                 if (self.ennemyText != None) and (self.PAS !=None) and (self.can!=None):
-                    ennemy.strategy( self.ennemyText[i], self.PAS, self.can)
+                    ennemy.strategy( self, self.ennemyText[i], self.PAS, self.can)
                 else:
-                    ennemy.strategy()
+                    ennemy.strategy(self)
                 if self.agent.getPosition() == ennemy.getPosition(): # if the movement of the ennemy is in the agent's position it is the end of the simulation
                     self.killed = True
-                    self.end = True
 
-        if self.display and not(self.end):# if it's not the end we make move again the ennemies 
-            self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+        if not(self.killed):
+            if self.display:# if it's not the end we make move again the ennemies 
+                self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+            else: 
+                threading.Timer(0.2, self.moveEnnemy).start()# use a timer to resuscribe to make move the ennemies slower than the agent   
 
     def initiate_simulation(self): 
         self.print_grid_line()
@@ -418,7 +425,7 @@ class State:
         self.moveEnnemy()
         self.grille.mainloop() 
 
-    def restart_simulation(self):
+    def end_simulation(self):
         self.grille.destroy() 
 
     def learning_Utility(self): 
@@ -429,17 +436,17 @@ class State:
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
 
         # Get the results from the sensors according the different movement executed by the agent 
-        """sensors_result_N = np.asarray(self.agent.sensors(self, direction=3)).astype(int)
+        sensors_result_N = np.asarray(self.agent.sensors(self, direction=3)).astype(int)
         sensors_result_O = np.asarray(self.agent.sensors(self, direction=2)).astype(int)
         #np.asarray(self.rotationEnvironment(270)).astype(int)
         sensors_result_S = np.asarray(self.agent.sensors(self, direction=1)).astype(int)
         #np.asarray(self.rotationEnvironment(180)).astype(int)
         sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)
-        #np.asarray(self.rotationEnvironment(90)).astype(int)"""
-        sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
-        sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
-        sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)
+        #np.asarray(self.rotationEnvironment(90)).astype(int)
+        #sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
+        #sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
+        #sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
+        #sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
         input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
@@ -450,9 +457,9 @@ class State:
                              input_nn_S.reshape(1,145),
                              input_nn_O.reshape(1,145),
                              input_nn_N.reshape(1,145)]
-
-        U_list = [self.nn.predict(i) for i in self.input_list ]      
-        self.U_list = [U_list[i] for i in range(4) ] #The utility according the different acts performed    
+                             
+        self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
+        #print(self.input_list)
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
 
     def backpropagating(self): 
@@ -464,16 +471,16 @@ class State:
         ######################### Configure the sensor inputs given the movement of the agent ######################### 
         input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
         #print(self.agent.get_previousAction())
-        """sensors_result_N = np.asarray(self.agent.sensors(self,  direction=3)).astype(int)
+        sensors_result_N = np.asarray(self.agent.sensors(self,  direction=3)).astype(int)
         sensors_result_O =np.asarray(self.agent.sensors(self, direction=2)).astype(int) 
         #np.asarray(self.rotationEnvironment(270)).astype(int)
         sensors_result_S = np.asarray(self.agent.sensors(self, direction=1)).astype(int) 
         #np.asarray(self.rotationEnvironment(180)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)"""
-        sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
+        sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)
+        """sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
         sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
         sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)
+        sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)"""
         #np.asarray(self.rotationEnvironment(90)).astype(int)
 
         input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
@@ -547,27 +554,27 @@ class State:
         Rotate the environment to establich the values of sensors according the rotation of the environment
         angle : 90, 180 and 270 degrees rotation
         """
-        x_agent, y_agent = self.agent.getPosition()
+        #x_agent, y_agent = self.agent.getPosition()
         positionEnnemies = [i.getPosition() for i in self.ennemies]
 
-        env_move_E = np.rot90(np.asarray(self.environment)).tolist()   # when we make a rotation of 90 degrees of the map
-        env_move_S = np.rot90(np.asarray(env_move_E)).tolist()          # when we make a rotation of 180 degrees of the map
-        env_move_O = np.rot90(np.asarray(env_move_S)).tolist()          # when we make a rotation of 270 degrees of the map
+        env_move_S = np.rot90(np.asarray(self.environment)).tolist()   # when we make a rotation of 90 degrees of the map
+        env_move_E = np.rot90(np.asarray(env_move_S)).tolist()          # when we make a rotation of 180 degrees of the map
+        env_move_O = np.rot90(np.asarray(env_move_E)).tolist()          # when we make a rotation of 270 degrees of the map
 
-        x_agent, y_agent = (24 - y_agent, x_agent)  # the position of agent changes after a rotation of the map
+        ##x_agent, y_agent = (24 - y_agent, x_agent)  # the position of agent changes after a rotation of the map
         positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies] # the ennemie position changes after a rotation of the map
 
         if angle == 180 or angle == 270: 
-            x_agent, y_agent = (24 - y_agent, x_agent)
+            #x_agent, y_agent = (24 - y_agent, x_agent)
             positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
             if angle == 270: 
-                x_agent, y_agent = (24 - y_agent, x_agent)
+                #x_agent, y_agent = (24 - y_agent, x_agent)
                 positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
-                return self.agent.sensors(self, x = 0, y = -1, environment = env_move_O, positionEnnemies = positionEnnemies)
+                return self.agent.sensors(self, environment = env_move_O, positionEnnemies = positionEnnemies)
             else:
-                return self.agent.sensors(self, x = 0, y = -1, environment = env_move_S, positionEnnemies = positionEnnemies)
+                return self.agent.sensors(self, environment = env_move_E, positionEnnemies = positionEnnemies)
        
-        return self.agent.sensors(self, x = 0, y = -1, environment = env_move_E, positionEnnemies = positionEnnemies)
+        return self.agent.sensors(self, environment = env_move_S, positionEnnemies = positionEnnemies)
 
     def actionSelector(self):
         """
@@ -614,13 +621,16 @@ class State:
             # Train the Neural Net with the state and next state input
             self.nn.train(state,target)
 
-    def reset(self, isTest, foodGet): 
+    def reset(self, isTest, foodGet, temperature, display = False): 
         """
         Reset the environment for the training 
         """
         # if it is a test phase, we put the food get by the agent at the end into the list result 
         if(isTest): 
             foodGet.append(self.totalFood)
+            self.Temp = 0
+        else:
+            self.Temp = temperature
 
         self.agent = agt.Agent(12,18, 40)
 
@@ -644,9 +654,9 @@ class State:
             self.environment[x][y] =2    
         
         self.end = False
+        self.killed = False
+        self.dead = False
         self.totalFood = 0 #food eaten during the simulation
-        if isTest: 
-            self.Temp = 0
 
     def save_utility_network(self,path_save): 
         """
@@ -665,9 +675,9 @@ def execute_simulation_learning(path_to_nn, display=False):
         print("the file %s exist!"%(path_to_nn))
         nn = NeuralNetwork(path_load = path_to_nn)
 
-    experiment = State(obstacles, nn, display)
+    experiment = State(obstacles, nn, 1/60,display)
 
-    if not display: 
+    if not display:        
         while not(experiment.end):
             experiment.moveEnnemy()
             experiment.moveAgent(learning = False)
@@ -683,7 +693,8 @@ def execute_simulation_no_learning_no_display(path_to_nn = None):
         nn = NeuralNetwork(30)
     else:
         nn = NeuralNetwork(path_load = path_to_nn)
-    experiment = State(obstacles, nn)
+    experiment = State(obstacles, nn, 1/60)
+
     while not(experiment.end):
         experiment.moveEnnemy()
         experiment.moveAgent()
@@ -702,7 +713,10 @@ def test_network(path_to_nn):
     return (mean,results,nb_dead,nb_killed)
 
 if __name__ == '__main__':
-    # start the experiment 
+    # start the experiment
+    """(m,l,d,k) = test_network("Utility_network/NN_0.010000.h5")
+    print("nourriture obtenue:", l)
+    print("moyenne:", m)""" 
     #for i in range(7): # the number of experiment
     
     """for j in range(4): # there are 300 training during one experiment 
@@ -719,7 +733,7 @@ if __name__ == '__main__':
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
     for i in range(5):
-        execute_simulation_learning("Utility_network/NN.h5",display=True)
+        execute_simulation_learning("Utility_network/NN_lr_0.100.h5",display=True)
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)
