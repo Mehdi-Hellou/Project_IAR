@@ -6,12 +6,13 @@ import threading
 
 if __name__ == '__main__': 
     l_lr = [0.001,0.01,0.1,0.3,1.0,3.0,10.0]
+    l_lr2 = [0.01, 0.03, 0.05, 0.07]
     Temp = [1/20,1/30,1/40,1/50,1/60]
-    
-    for lr in l_lr[1:2]: 
+    Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
+    for lr in l_lr2: 
         
-        path_to_nn = "Utility_network/NN_lr_%.3f.h5"%(lr)
-        name_File = "Result/result_lr_%.3f.txt"%(lr)
+        path_to_nn = "Utility_network/NN_%.3f_60-140.h5"%(lr)
+        name_File = "Result/result_%.3f_60-140.txt"%(lr)
 
         ### Load the neural network if the path exist or not 
         if os.path.isfile(path_to_nn):
@@ -19,7 +20,7 @@ if __name__ == '__main__':
             nn = NeuralNetwork(30,path_load =path_to_nn, lr=lr)
         else: 
             print("The path doesn't exist !")
-            nn = NeuralNetwork(30, lr=l_lr[1])
+            nn = NeuralNetwork(30, lr=lr)
 
         env = State(obstacles, nn, Temp[0],display = False)
         test = False
@@ -28,10 +29,10 @@ if __name__ == '__main__':
 
         for i in range(7):
 
-            for epoch in range(1,301):
+            for epoch in range(0,300):
                 
-                if (epoch-1)%60 == 0: 
-                    T = Temp[int((epoch-1)/60)]
+                if epoch%60 == 0: 
+                    T = Temp[int(epoch/60)]
 
                 #phase entrainement 
                 print("########################################### Train-%s ###########################################"%(epoch))
