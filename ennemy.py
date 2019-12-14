@@ -19,28 +19,28 @@ class Ennemy(object):
         x,y = self.getPosition() 
         # Bouger vers le Nord 
         if direction == 3: 
-            if state.lookupObstacles(x, y - 1)==False and state.lookupEnnemies(x, y - 1)==False: 
+            if state.lookupObstacles(x, y - 1)==False and state.lookupEnnemies(x, y - 1)==False and state.lookupFood(x, y-1)==False: 
                 y = y - 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     #print("North!!!")
                     canvas.move(ennemyText, 0, -pas)
         # Bouger vers l'Ouest
         elif direction == 2:
-            if state.lookupObstacles(x - 1 ,y)==False and state.lookupEnnemies(x, y - 1)==False: 
+            if state.lookupObstacles(x - 1 ,y)==False and state.lookupEnnemies(x -1 , y)==False and state.lookupFood(x-1 , y)==False: 
                 x = x - 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None):
                     #print("West!!!")
                     canvas.move(ennemyText, -pas, 0)            
         # Bouger vers le Sud
         elif direction == 1:
-            if state.lookupObstacles(x,y + 1)==False and state.lookupEnnemies(x, y - 1)==False:
+            if state.lookupObstacles(x,y + 1)==False and state.lookupEnnemies(x, y + 1)==False and state.lookupFood(x, y+1)==False:
                 y = y + 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     #print("South!!!")
                     canvas.move(ennemyText, 0, pas)
         # Bouger vers l'Est
         elif direction == 0:
-            if state.lookupObstacles(x + 1,y)==False and state.lookupEnnemies(x, y - 1)==False:
+            if state.lookupObstacles(x + 1,y)==False and state.lookupEnnemies(x+1, y )==False and state.lookupFood(x+1, y)==False:
                 x = x + 1
                 if (canvas != None) and (ennemyText != None) and (pas !=None): 
                     #print("East!!!")

@@ -9,10 +9,10 @@ if __name__ == '__main__':
     l_lr2 = [0.01, 0.03, 0.05, 0.07]
     Temp = [1/20,1/30,1/40,1/50,1/60]
     Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
-    for lr in l_lr2: 
+    for lr in [l_lr[3]]: 
         
-        path_to_nn = "Utility_network/NN_%.3f_60-140.h5"%(lr)
-        name_File = "Result/result_%.3f_60-140.txt"%(lr)
+        path_to_nn = "Utility_network/NN_%.3f_20-60.h5"%(lr)
+        name_File = "Result/result_%.3f_20-60.txt"%(lr)
 
         ### Load the neural network if the path exist or not 
         if os.path.isfile(path_to_nn):
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         result = []
         mean_food = []
 
-        for i in range(7):
+        """for i in range(7):
 
             for epoch in range(0,300):
                 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
                 f.write("experiment {} mean food : {} .\n".format(i+1,result))
                 result = []
 
-        env.save_utility_network(path_to_nn)
+        env.save_utility_network(path_to_nn)"""
 
         """for i in range(50):
             e = threading.Event()
@@ -69,29 +69,35 @@ if __name__ == '__main__':
             e.wait()
             print('Simulation finished !!!!')
             env.reset(True,result,Temp[0])"""
-        """for i in range(7):
+        for i in range(7):
 
-            for epoch in range(1,301):
+            for epoch in range(0,300):
                 
-                if (epoch-1)%60 == 0: 
-                    T = Temp[int((epoch-1)/60)]
+                if epoch%60 == 0: 
+                    T = Temp[int(epoch/60)]
 
                 #phase entrainement 
                 print("########################################### Train-%s ###########################################"%(epoch))
+                count = 0
                 env.reset(False,result,T)
                 while not env.end:
-                    env.moveEnnemy()
+                    count+=0.1
                     env.moveAgent(learning = True)
-
+                    if count%0.2==0: 
+                        env.moveEnnemy()
+                    
                 if epoch%20 == 0: 
                     #phase test
                     
                     for j in range(0,50):
                         print("########################################### Test-%s ###########################################"%(j))
                         env.reset(True,mean_food,T)
+                        count = 0
                         while not env.end:
-                            env.moveEnnemy()
+                            count+=0.1                            
                             env.moveAgent(learning = False)
+                            if count%0.2==0: 
+                                env.moveEnnemy()
 
                     result.append(sum(mean_food)/50)
                     mean_food = []
@@ -100,6 +106,6 @@ if __name__ == '__main__':
                 f.write("experiment {} mean food : {} .\n".format(i+1,result))
                 result = []
 
-        env.save_utility_network(path_to_nn)"""
+            env.save_utility_network(path_to_nn)
     
 

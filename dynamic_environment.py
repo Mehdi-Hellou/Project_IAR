@@ -391,11 +391,11 @@ class State:
             if self.end:
                 self.end_simulation()
             self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
-        else:
+        """else:
             if not self.end: 
-                threading.Timer(0.0, self.moveAgent,[learning,event]).start() # use a timer to resuscribe to make move the agent faster than the ennemies 
+                threading.Timer(0.00001, self.moveAgent,[learning,event]).start() # use a timer to resuscribe to make move the agent faster than the ennemies 
             else: 
-                event.set()
+                event.set()"""
 
             
     def moveEnnemy(self):
@@ -416,8 +416,8 @@ class State:
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
                 self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
-            else: 
-                threading.Timer(0.2, self.moveEnnemy).start()# use a timer to resuscribe to make move the ennemies slower than the agent   
+            """else: 
+                threading.Timer(0.0000125, self.moveEnnemy).start()# use a timer to resuscribe to make move the ennemies slower than the agent"""  
 
     def initiate_simulation(self): 
         self.print_grid_line()
@@ -433,25 +433,23 @@ class State:
         Return the action that maximize the utility and the utiliy given by performing this action
         """
         # Shape the input that we give to the neural network with the value of sensors, the previous actions the life of the agent 
-        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
-
         # Get the results from the sensors according the different movement executed by the agent 
-        sensors_result_N = np.asarray(self.agent.sensors(self, direction=3)).astype(int)
-        sensors_result_O = np.asarray(self.agent.sensors(self, direction=2)).astype(int)
+        sensors_result_N = self.agent.sensors(self, direction=3) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(3)+[self.agent.get_previous_collision()]
+        sensors_result_O = self.agent.sensors(self, direction=2) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
         #np.asarray(self.rotationEnvironment(270)).astype(int)
-        sensors_result_S = np.asarray(self.agent.sensors(self, direction=1)).astype(int)
+        sensors_result_S = self.agent.sensors(self, direction=1) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
         #np.asarray(self.rotationEnvironment(180)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)
+        sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
         #np.asarray(self.rotationEnvironment(90)).astype(int)
-        #sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
-        #sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
-        #sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
-        #sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)
 
-        input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
-        input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
-        input_nn_S = np.concatenate((sensors_result_S,input_nn))    # input when the South action is performed
-        input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
+        input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
+        input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
+        input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
+        input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
         self.input_list =   [input_nn_E.reshape(1,145),
                              input_nn_S.reshape(1,145),
@@ -469,24 +467,22 @@ class State:
         """ 
 
         ######################### Configure the sensor inputs given the movement of the agent ######################### 
-        input_nn = np.asarray(self.agent.get_energy_coarsed() + self.agent.get_previousAction() + [int(self.agent.get_previous_collision())]) 
-        #print(self.agent.get_previousAction())
-        sensors_result_N = np.asarray(self.agent.sensors(self,  direction=3)).astype(int)
-        sensors_result_O =np.asarray(self.agent.sensors(self, direction=2)).astype(int) 
+        sensors_result_N = self.agent.sensors(self, direction=3) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(3)+[int(self.agent.get_previous_collision())]
+        sensors_result_O = self.agent.sensors(self, direction=2) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(2) + [int(self.agent.get_previous_collision())]
         #np.asarray(self.rotationEnvironment(270)).astype(int)
-        sensors_result_S = np.asarray(self.agent.sensors(self, direction=1)).astype(int) 
+        sensors_result_S = self.agent.sensors(self, direction=1) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(1) + [int(self.agent.get_previous_collision())]
         #np.asarray(self.rotationEnvironment(180)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors(self, direction=0)).astype(int)
-        """sensors_result_N = np.asarray(self.agent.sensors_without_rot(self, direction=3)).astype(int)
-        sensors_result_O = np.asarray(self.agent.sensors_without_rot(self, direction=2)).astype(int)
-        sensors_result_S = np.asarray(self.agent.sensors_without_rot(self, direction=1)).astype(int)
-        sensors_result_E = np.asarray(self.agent.sensors_without_rot(self, direction=0)).astype(int)"""
+        sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(0) + [int(self.agent.get_previous_collision())]
         #np.asarray(self.rotationEnvironment(90)).astype(int)
 
-        input_nn_N = np.concatenate((sensors_result_N,input_nn))    # input when the Nord action is performed 
-        input_nn_O = np.concatenate((sensors_result_O,input_nn))    # input when the West action is performed
-        input_nn_S = np.concatenate((sensors_result_S,input_nn))    # input when the South action is performed
-        input_nn_E = np.concatenate((sensors_result_E,input_nn))    # input when the West action is performed
+        input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
+        input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
+        input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
+        input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
         l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
         ######################### Configure the sensor inputs given the movement of the agent #########################
@@ -505,7 +501,8 @@ class State:
             index_input_maxU = np.argmax(U_list_y)   # the input given for the backprogating is the one with the maximum utility
             input_target = l_input[index_input_maxU]
             """sensor = np.asarray(self.agent.sensors_without_rot(self)).astype(int)
-            input_target = np.concatenate((sensor,input_nn)).reshape(1,145)"""
+            input_target = np.concatenate((sensor,input_nn)).reshape(1,145)
+            input_target = l_input[self.agent.get_previousAction()[-1]]"""
             uprime = self.agent.reward + self.gamma * self.nn.predict(input_target)    # input of the utility with the best value
         
         else:
@@ -634,15 +631,16 @@ class State:
 
         self.agent = agt.Agent(12,18, 40)
 
-        self.ennemies = []
+        """self.ennemies = []
         for i in range(4):
             x = random.randint(0,24)
             y = random.randint(0,24)
             while not self.is_empty(x,y):
                 x = random.randint(0,24)
                 y = random.randint(0,24)
-            self.ennemies.append(Ennemy(x,y,self))   
+            self.ennemies.append(Ennemy(x,y,self))   """
 
+        self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]
         self.environment = [[ 0 if j==2 else j for j in i] for i in self.environment]
         # we reset the location of the food 
         for i in range(15):
@@ -675,7 +673,7 @@ def execute_simulation_learning(path_to_nn, display=False):
         print("the file %s exist!"%(path_to_nn))
         nn = NeuralNetwork(path_load = path_to_nn)
 
-    experiment = State(obstacles, nn, 1/60,display)
+    experiment = State(obstacles, nn, 1/20,display)
 
     if not display:        
         while not(experiment.end):
@@ -685,7 +683,7 @@ def execute_simulation_learning(path_to_nn, display=False):
 def train_network(path_save_nn): 
     for i in range(20):
         print("----------------------------------------train%d---------------------------------------------" % i)
-        execute_simulation_learning(path_save_nn)
+        execute_simulation_learning(path_save_nn, display=True)
         
 
 def execute_simulation_no_learning_no_display(path_to_nn = None):
@@ -719,7 +717,7 @@ if __name__ == '__main__':
     print("moyenne:", m)""" 
     #for i in range(7): # the number of experiment
     
-    """for j in range(4): # there are 300 training during one experiment 
+    """for j in range(15): # there are 300 training during one experiment 
         train_network("save.h5")
         #food = execute_simulation_no_learning_no_display()
 

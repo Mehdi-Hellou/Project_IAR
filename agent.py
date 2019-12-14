@@ -44,7 +44,7 @@ class Agent(object):
         self.y = y
         self.energy = energy
         self.coarseEnergy = [1 for i in range(16)]   # the coarse coding of the energy for the Neural Network 
-        self.previousAction = [0 for i in range(4)] # the 4 previous actions made by the agent 
+        self.previousAction = [-1 for i in range(4)] # the 4 previous actions made by the agent 
         self.previous_collision = False # if the agent collide with an obstacle in the previous
         self.reward = 0.0
         return
@@ -82,6 +82,27 @@ class Agent(object):
     def get_previous_collision(self): 
         return self.previous_collision
          
+    def rotate_previousAction(self, direction):
+        """
+        return the previous action list, related to the rotation made by the direction
+        """ 
+
+        temp_prevAction = [] # the temporal list return by the method
+
+        if direction==0:
+            temp_prevAction = [i-1 if i>0 else 3 if i==0 else -1 for i in self.get_previousAction()]
+
+        elif direction==1: 
+            temp_prevAction = [i-2 if i>1 else 3 if i==1 else 2 if i == 0 else -1 for i in self.get_previousAction()]
+
+        elif direction==2:
+            temp_prevAction = [i+1 if i!=3 else 0 if i ==3 else -1 for i in self.get_previousAction()]
+
+        else: 
+            temp_prevAction = self.get_previousAction()
+
+        return temp_prevAction 
+
     def updateEnergy(self,canvas, energy_bar, getFood):
         """
         canvas : the canvas where the health bar is located 
