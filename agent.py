@@ -286,9 +286,7 @@ class Agent(object):
         The policy of the agentgiven the current neural network, the best utility 
         for the different action it can performed and its current state. 
         """
-        l_actions = state.learning_Utility()   # learning step of the agent to get the list of proba values for each action
-        #print(l_actions)
-        action = np.argmax(l_actions)
+        action = state.learning_Utility()   # learning step of the agent to get the action 
         x,y = self.move(action,state, canvas,agentText, pas)  # we make move the agent according the best action possible 
         self.setPosition(x,y)  
       

@@ -585,7 +585,7 @@ class State:
             if len(self.lessons) > 60:  
                 # if the agent haven't already gotten food since a certain time 
                 # we increase the temperature by 0.1 
-                if self.count_without_food>6: 
+                if self.count_without_food>10: 
                     if self.Temp>=(1/20): 
                         self.Temp = 1/20
                     else: 
@@ -601,9 +601,15 @@ class State:
             self.action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
             #print(np.array(self.U_list))
             #print(self.action_proba)
-            return self.action_proba
+            #print("The temperature is %f"%(self.Temp))
+            return np.random.choice(np.arange(4),p=self.action_proba)  # choice a random choice relating to the probability distribution given by the softmax algorith
         else:
-            return self.U_list
+            p = random.uniform(0, 1)
+            if p > 0.1: 
+                #print(self.U_list)
+                return np.argmax(self.U_list)
+            else: 
+                return np.random.randint(4)
 
     def chooseLessons(self,nb_lessons):
         """
@@ -692,7 +698,7 @@ def execute_simulation_learning(path_to_nn, display=False):
         print("the file %s exist!"%(path_to_nn))
         nn = NeuralNetwork(path_load = path_to_nn)
 
-    experiment = State(obstacles, nn, 1/20,display)
+    experiment = State(obstacles, nn, 0,display)
 
     if not display:        
         while not(experiment.end):
@@ -750,7 +756,7 @@ if __name__ == '__main__':
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
     for i in range(5):
-        execute_simulation_learning("Utility_network/NN_0.100_40.h5",display=True)
+        execute_simulation_learning("Utility_network/NN_0.100.h5",display=True)
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)

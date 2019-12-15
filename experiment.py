@@ -9,7 +9,7 @@ if __name__ == '__main__':
     l_lr2 = [0.01, 0.03, 0.05, 0.07]
     Temp = [1/20,1/30,1/40,1/50,1/60]
     Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
-    for lr in [l_lr[2]]: 
+    for lr in l_lr[1:]: 
         
         path_to_nn = "Utility_network/NN_%.3f.h5"%(lr)
         name_File = "Result/result_%.3f.txt"%(lr)
