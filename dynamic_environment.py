@@ -66,6 +66,8 @@ class State:
         self.Temp = temperature # The temperature for the stochastic action selector 
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.totalFood = 0 #food eaten during the simulation
+        self.count_without_food = 0 # a count to compute when the robot is stuck in a area without getting food 
+        
         self.grille = None
         self.can = None
         self.agentText = None
@@ -80,7 +82,7 @@ class State:
         self.action_proba = []  # the list of probabilities for each action
 
         self.memory = []   # the list that will record previous experiments for the replay buffer()
-        self.lesson = ()   # lessons for the replay buffer that will obtain 
+        self.lessons = []   # lessons for the replay buffer that will obtain 
         self.display = display
         if self.display:
             self.initiate_simulation()
@@ -373,6 +375,7 @@ class State:
             self.agent.setEnergy(15)
             self.deleteFood(x,y)  # delete the food from the environment
             self.totalFood+=1
+            self.count_without_food=0
             if self.totalFood==15:
                 self.end=True
             getFood = True
@@ -381,21 +384,22 @@ class State:
         else: 
             self.agent.reward = 0.0
             self.agent.setEnergy(-1, self)
+            self.count_without_food+=1
             if self.agent.remaining_energy()>0:
                 self.agent.updateEnergy(self.can_life,self.life, getFood)   
         
         if learning:
+            # we add the list of experiences to the lessons list if it's the end 
+            if self.end:
+                if len(self.lessons)==100:   # the maximum amount accepted by the lessons list is 100
+                    self.lessons.pop(0)
+                self.lessons.append(self.memory) # we add all the experiment from this play to the lessons' list
             self.backpropagating()        
 
         if self.display:
             if self.end:
                 self.end_simulation()
             self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
-        """else:
-            if not self.end: 
-                threading.Timer(0.00001, self.moveAgent,[learning,event]).start() # use a timer to resuscribe to make move the agent faster than the ennemies 
-            else: 
-                event.set()"""
 
             
     def moveEnnemy(self):
@@ -416,8 +420,6 @@ class State:
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
                 self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
-            """else: 
-                threading.Timer(0.0000125, self.moveEnnemy).start()# use a timer to resuscribe to make move the ennemies slower than the agent"""  
 
     def initiate_simulation(self): 
         self.print_grid_line()
@@ -438,13 +440,16 @@ class State:
          self.agent.rotate_previousAction(3)+[self.agent.get_previous_collision()]
         sensors_result_O = self.agent.sensors(self, direction=2) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
-        #np.asarray(self.rotationEnvironment(270)).astype(int)
+        #sensors_result_O = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
+        # self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
         sensors_result_S = self.agent.sensors(self, direction=1) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
-        #np.asarray(self.rotationEnvironment(180)).astype(int)
+        #sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
+        # self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
         sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
-        #np.asarray(self.rotationEnvironment(90)).astype(int)
+        #sensors_result_E = self.rotationEnvironment(90) + + self.agent.get_energy_coarsed()+\
+         #self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
 
         input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
         input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
@@ -471,13 +476,16 @@ class State:
          self.agent.rotate_previousAction(3)+[int(self.agent.get_previous_collision())]
         sensors_result_O = self.agent.sensors(self, direction=2) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(2) + [int(self.agent.get_previous_collision())]
-        #np.asarray(self.rotationEnvironment(270)).astype(int)
+        #sensors_result_O = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
+        # self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
         sensors_result_S = self.agent.sensors(self, direction=1) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(1) + [int(self.agent.get_previous_collision())]
-        #np.asarray(self.rotationEnvironment(180)).astype(int)
+        #sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
+        # self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
         sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(0) + [int(self.agent.get_previous_collision())]
-        #np.asarray(self.rotationEnvironment(90)).astype(int)
+        #sensors_result_E = self.rotationEnvironment(90) + + self.agent.get_energy_coarsed()+\
+         #self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
 
         input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
         input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
@@ -515,12 +523,8 @@ class State:
         ##### Add to the lesson the action chose in order to go the next state, 
         ##### the next state after to have performed the action, and the reward given
         if(self.action_proba[action] > 0.01):   # the Pl minimum to choose the action corresponding to the action policy, cf to the paper part experience replay             
-            self.lesson+=(input_nn,action,input_target,self.agent.reward)
-            # We add the lessons to the memory of the agent 
-            if len(self.memory)==100: 
-                self.memory.pop(0)
-            self.memory.append(self.lesson)
-        self.lesson = ()
+            self.memory.append((input_nn,action,input_target,self.agent.reward)) # We add the experiment to the memory of the agent 
+            
         ############################
 
         #self.nn._train_one_step(input_nn,input_target,parameters, self.end)
@@ -569,15 +573,29 @@ class State:
                 positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
                 return self.agent.sensors(self, environment = env_move_O, positionEnnemies = positionEnnemies)
             else:
-                return self.agent.sensors(self, environment = env_move_E, positionEnnemies = positionEnnemies)
+                return self.agent.sensors(self, environment = env_move_S, positionEnnemies = positionEnnemies)
        
-        return self.agent.sensors(self, environment = env_move_S, positionEnnemies = positionEnnemies)
+        return self.agent.sensors(self, environment = env_move_E, positionEnnemies = positionEnnemies)
 
     def actionSelector(self):
         """
         the function that selection the action given the different merit of each action
         """ 
-        if self.Temp!=0: 
+        if self.Temp!=0:
+            if len(self.lessons) > 60:  
+                # if the agent haven't already gotten food since a certain time 
+                # we increase the temperature by 0.1 
+                if self.count_without_food>6: 
+                    if self.Temp>=(1/20): 
+                        self.Temp = 1/20
+                    else: 
+                        self.Temp+=0.005      
+                else: 
+                    if self.Temp<=(1/60):
+                        self.Temp = 1/60
+                    else: 
+                        self.Temp -= 0.005
+                        
             s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
             self.action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
@@ -605,18 +623,18 @@ class State:
         # Sample minibatch from the memory
         for i in range(0,nb_lessons): 
             k = self.chooseLessons(nb_lessons)
-            minibatch.append(self.memory[k])
+            minibatch.append(self.lessons[k])
         
         # Extract informations from each memory
         for state,action,next_state,reward in minibatch:
             # if done, make our target reward
             target = reward
-            if not(y==None):
+            if not(next_state==None):
                 # predict the future discounted reward
                 target = reward + self.gamma * self.nn.predict(next_state)
             
             # Train the Neural Net with the state and next state input
-            self.nn.train(state,target)
+            self.nn.train_one_step_other(state,target)
 
     def reset(self, isTest, foodGet, temperature, display = False): 
         """
@@ -655,6 +673,7 @@ class State:
         self.killed = False
         self.dead = False
         self.totalFood = 0 #food eaten during the simulation
+        self.memory = []  # we reset the list of experiences
 
     def save_utility_network(self,path_save): 
         """
@@ -731,7 +750,7 @@ if __name__ == '__main__':
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
     for i in range(5):
-        execute_simulation_learning("Utility_network/NN_lr_0.100.h5",display=True)
+        execute_simulation_learning("Utility_network/NN_0.100_40.h5",display=True)
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)

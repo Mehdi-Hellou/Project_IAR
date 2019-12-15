@@ -106,28 +106,28 @@ class testState(unittest.TestCase):
                 if env_270.environment[i][j] == 2: 
                     env_270.environment[i][j]=0
 
-        #testgrid.print_grid_line()
-        #testgrid.grille.mainloop()
+        testgrid.print_grid_line()
+        testgrid.grille.mainloop()
         e = np.asarray(testgrid.environment)
         
         e = np.rot90(e)
         env_90.environment = e.tolist() # environment with a rotation of 90
         env_90.ennemies = [Ennemy(18,6,env_90.environment), Ennemy(22,12,env_90.environment), Ennemy(18,12,env_90.environment), Ennemy(18,18,env_90.environment)]
 
-        #env_90.print_grid_line()
-        #env_90.grille.mainloop()
+        env_90.print_grid_line()
+        env_90.grille.mainloop()
 
         e = np.rot90(e)
         env_180.environment = e.tolist() # environment with a rotation of 180
         env_180.ennemies = [Ennemy(18,18,env_180.environment), Ennemy(12,22,env_180.environment), Ennemy(12,18,env_180.environment), Ennemy(6,18,env_180.environment)]
-        #env_180.print_grid_line()
-        #env_180.grille.mainloop()
+        env_180.print_grid_line()
+        env_180.grille.mainloop()
 
         e = np.rot90(e)
         env_270.environment = e.tolist() # environment with a rotation of 270
         env_270.ennemies = [Ennemy(6,18,env_270.environment), Ennemy(2,12,env_270.environment), Ennemy(6,12,env_270.environment), Ennemy(6,6,env_270.environment)]
-        #env_270.print_grid_line()
-        #env_270.grille.mainloop()
+        env_270.print_grid_line()
+        env_270.grille.mainloop()
 
         sensors_S = testgrid.rotationEnvironment(90) # sensors when the environment is rotated at 90 degrees
         sensors_E = testgrid.rotationEnvironment(180) # sensors when the environment is rotated at 180 degrees
@@ -155,8 +155,7 @@ class testState(unittest.TestCase):
 
         sensor_E_rot = np.asarray(testgrid.rotationEnvironment(270)).astype(int)
 
-        print(sensors_E_sim)
-        print(sensor_E_rot)
+    #def testExperienceReplay(self): 
 
         
 if __name__ == '__main__':
