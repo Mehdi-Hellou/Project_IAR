@@ -12,7 +12,7 @@ if __name__ == '__main__':
     for lr in l_lr[2:3]: 
         
         path_to_nn = "Utility_network/NN_%.3f_test.h5"%(lr)
-        name_File = "Result/result_%.3f_30.txt"%(lr)
+        name_File = "Result/result_%.3f_test.txt"%(lr)
 
         ### Load the neural network if the path exist or not 
         if os.path.isfile(path_to_nn):
@@ -30,7 +30,7 @@ if __name__ == '__main__':
         for i in range(1):
             nn = NeuralNetwork(30, lr=lr)
             env = State(obstacles, nn, Temp[0],display = False)
-            for epoch in range(0,300):
+            for epoch in range(0,100):
                 
                 if epoch%60 == 0: 
                     #T = Temp[int(epoch/60)]

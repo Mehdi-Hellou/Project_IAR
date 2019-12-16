@@ -44,7 +44,7 @@ class Agent(object):
         self.y = y
         self.energy = energy
         self.coarseEnergy = [1 for i in range(16)]   # the coarse coding of the energy for the Neural Network 
-        self.previousAction = [-1 for i in range(4)] # the 4 previous actions made by the agent 
+        self.previousAction = [0 for i in range(4)] # the 4 previous actions made by the agent 
         self.previous_collision = False # if the agent collide with an obstacle in the previous
         self.reward = 0.0
         return
@@ -90,13 +90,13 @@ class Agent(object):
         temp_prevAction = [] # the temporal list return by the method
 
         if direction==0:
-            temp_prevAction = [i-1 if i>0 else 3 if i==0 else -1 for i in self.get_previousAction()]
+            temp_prevAction = np.roll(self.get_previousAction(),-1).tolist()
 
         elif direction==1: 
-            temp_prevAction = [i-2 if i>1 else 3 if i==1 else 2 if i == 0 else -1 for i in self.get_previousAction()]
+            temp_prevAction = np.roll(self.get_previousAction(),-2).tolist()
 
         elif direction==2:
-            temp_prevAction = [i+1 if i!=3 else 0 if i ==3 else -1 for i in self.get_previousAction()]
+            temp_prevAction = np.roll(self.get_previousAction(),-3).tolist()
 
         else: 
             temp_prevAction = self.get_previousAction()
@@ -289,9 +289,8 @@ class Agent(object):
         action = state.learning_Utility()   # learning step of the agent to get the action 
         x,y = self.move(action,state, canvas,agentText, pas)  # we make move the agent according the best action possible 
         self.setPosition(x,y)  
-      
-        self.previousAction.pop(0) # we remove the first element of the list since we only record the 4 previous actions 
-        self.previousAction.append(action)  # we add the new direction to the list of previous ones 
+        
+        self.previousAction = [1 if i==action else 0 for i in range(4)]
 
     def sensorObstacle(self,state): 
         positionObstacle = []   # List of position of obstacle in function of position of agent 

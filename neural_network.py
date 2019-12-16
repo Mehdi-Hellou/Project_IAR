@@ -2,13 +2,14 @@ import sys
 import tensorflow as tf
 import numpy as np
 
-
+#@tf.function
 def new_sigmoid(x):
     """
     Activate function
     """ 
     return (1/(1+tf.math.exp(-x))) - 0.5
 
+#@tf.function
 def customLoss(yp, y): 
     """
     fonction loss 
@@ -20,30 +21,33 @@ def derivate_sigmoid(x):
 
 class NeuralNetwork(object):
     """docstring for NeuralNetwork"""
-    def __init__(self,n_hidden = None, path_load = None, lr = 0.1):
+    def __init__(self,n_hidden = None, path_load = None, lr = 0.3):
         if (n_hidden == None) and (path_load == None ):
             raise ValueError("Un argument est nécessaire")
         super(NeuralNetwork, self).__init__()
         if path_load == None:
             print("New NN")
-            #self.model = tf.keras.models.Sequential()
+            self.model = tf.keras.models.Sequential()
 
             #add the the input layer 
-            #self.model.add(tf.keras.layers.InputLayer(input_shape=(145,)))
-            inputs = tf.keras.layers.Input(shape=(145,))
+            self.model.add(tf.keras.layers.InputLayer(input_shape=(145,)))
+            #inputs = tf.keras.layers.Input(shape=(145,))
 
             # add the hidden layers 
-            init = tf.constant_initializer(0.1*np.random.rand(145,n_hidden))
+            init = tf.constant_initializer(0.01*np.random.rand(145,n_hidden))
             #self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
-            x = tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init)(inputs)
+            #x = tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init)(inputs)
+            self.model.add(tf.keras.layers.Dense( n_hidden, activation = "softmax", kernel_initializer= init))
 
             #Add the output layers
-            init = tf.constant_initializer(0.1*np.random.rand(n_hidden,1))
+            init = tf.constant_initializer(0.01*np.random.rand(n_hidden,1))
             #self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
-            outputs = tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init )(x)
+            #outputs = tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init )(x)
+            self.model.add(tf.keras.layers.Dense(1, activation = "softmax", kernel_initializer= init ) )
 
-            self.model = tf.keras.Model(inputs=inputs, outputs=outputs)           
-            self.model.compile(loss=customLoss)
+            #self.model = tf.keras.Model(inputs=inputs, outputs=outputs)           
+            self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 
+                              loss=customLoss)          # the loss function
         else:
             print("Same NN")
             self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
@@ -99,9 +103,17 @@ class NeuralNetwork(object):
         target : the target label 
 
         """
-        loss , gradients = self.grad(X,target) 
+        print("########################Input###############################")
+        print(X)
+        loss , gradients = self.grad(X,target)
+        print("########gradient########")
+        tf.print(gradients[0]) 
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         tf.print("Step: {},         Loss: {}".format(self.optimizer.iterations.numpy(),loss))
+        self.print_weight()
+    
+    def print_weight(self):
+        tf.print(self.model.trainable_variables[0])
     
     def train(self,X,target): 
         self.model.fit(X,target)

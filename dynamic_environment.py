@@ -399,7 +399,7 @@ class State:
         if self.display:
             if self.end:
                 self.end_simulation()
-            self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+            self.grille.after(6000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
 
             
     def moveEnnemy(self):
@@ -419,12 +419,12 @@ class State:
 
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
-                self.grille.after(5000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+                self.grille.after(6000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
         self.print_grid_line()
         self.moveAgent(learning=True) 
-       #self.moveEnnemy()
+        self.moveEnnemy()
         self.grille.mainloop() 
 
     def end_simulation(self):
@@ -519,7 +519,8 @@ class State:
         
         action = self.agent.get_previousAction()[-1]
         input_nn = self.input_list[action]
-        
+        print("######################Original Input")
+        print(input_nn)
         ##### Add to the lesson the action chose in order to go the next state, 
         ##### the next state after to have performed the action, and the reward given
         if(self.action_proba[action] > 0.01):   # the Pl minimum to choose the action corresponding to the action policy, cf to the paper part experience replay             
@@ -750,7 +751,7 @@ if __name__ == '__main__':
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
     for i in range(5):
-        execute_simulation_learning("Utility_network/NN_0.100_v2.h5",display=True)
+        execute_simulation_learning("save.h5",display=True)
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)
