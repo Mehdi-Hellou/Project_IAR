@@ -34,16 +34,16 @@ class NeuralNetwork(object):
             #inputs = tf.keras.layers.Input(shape=(145,))
 
             # add the hidden layers 
-            init = tf.constant_initializer(0.01*np.random.rand(145,n_hidden))
-            #self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
+            init = tf.constant_initializer(0.1*np.random.rand(145,n_hidden))
+            self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
             #x = tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init)(inputs)
-            self.model.add(tf.keras.layers.Dense( n_hidden, activation = "softmax", kernel_initializer= init))
+            #self.model.add(tf.keras.layers.Dense( n_hidden, activation = "softmax", kernel_initializer= init))
 
             #Add the output layers
             init = tf.constant_initializer(0.01*np.random.rand(n_hidden,1))
-            #self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
+            self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
             #outputs = tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init )(x)
-            self.model.add(tf.keras.layers.Dense(1, activation = "softmax", kernel_initializer= init ) )
+            #self.model.add(tf.keras.layers.Dense(1, activation = "softmax", kernel_initializer= init ) )
 
             #self.model = tf.keras.Model(inputs=inputs, outputs=outputs)           
             self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 
@@ -66,8 +66,8 @@ class NeuralNetwork(object):
         """
         with tf.GradientTape() as tape:
             yp = self.predict(inputs)
-            #loss_value = customLoss(yp,target)
-            loss_value = self.loss_fn(target,yp)
+            loss_value = customLoss(yp,target)
+            #loss_value = self.loss_fn(target,yp)
 
         print("the prediction is %s" %(yp))
         print("the target is %s" %(target))
@@ -103,14 +103,15 @@ class NeuralNetwork(object):
         target : the target label 
 
         """
-        print("########################Input###############################")
-        print(X)
+        #print("########################Input###############################")
+        #print(X)
+
         loss , gradients = self.grad(X,target)
-        print("########gradient########")
-        tf.print(gradients[0]) 
+        #print("########gradient########")
+        #tf.print(gradients[0]) 
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         tf.print("Step: {},         Loss: {}".format(self.optimizer.iterations.numpy(),loss))
-        self.print_weight()
+        #self.print_weight()
     
     def print_weight(self):
         tf.print(self.model.trainable_variables[0])

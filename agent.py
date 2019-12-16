@@ -287,6 +287,7 @@ class Agent(object):
         for the different action it can performed and its current state. 
         """
         action = state.learning_Utility()   # learning step of the agent to get the action 
+        
         x,y = self.move(action,state, canvas,agentText, pas)  # we make move the agent according the best action possible 
         self.setPosition(x,y)  
         

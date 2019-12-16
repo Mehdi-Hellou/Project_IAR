@@ -6,6 +6,7 @@ import agent as agt
 import threading 
 from ennemy import Ennemy
 from neural_network import *
+from neural_network_self import *
 
 random.seed()
 
@@ -456,10 +457,14 @@ class State:
         input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
         input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
-        self.input_list =   [input_nn_E.reshape(1,145),
+        """self.input_list =   [input_nn_E.reshape(1,145),
                              input_nn_S.reshape(1,145),
                              input_nn_O.reshape(1,145),
-                             input_nn_N.reshape(1,145)]
+                             input_nn_N.reshape(1,145)]"""
+        self.input_list =   [input_nn_E,
+                             input_nn_S,
+                             input_nn_O,
+                             input_nn_N]
                              
         self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
         #print(self.input_list)
@@ -492,7 +497,8 @@ class State:
         input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
         input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
-        l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
+        #l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
+        l_input = [input_nn_E,input_nn_S,input_nn_O,input_nn_N]
         ######################### Configure the sensor inputs given the movement of the agent #########################
 
         print("The reward in baskpropagating is %f" %(self.agent.reward) ) 
@@ -519,17 +525,15 @@ class State:
         
         action = self.agent.get_previousAction()[-1]
         input_nn = self.input_list[action]
-        print("######################Original Input")
-        print(input_nn)
         ##### Add to the lesson the action chose in order to go the next state, 
         ##### the next state after to have performed the action, and the reward given
         if(self.action_proba[action] > 0.01):   # the Pl minimum to choose the action corresponding to the action policy, cf to the paper part experience replay             
             self.memory.append((input_nn,action,input_target,self.agent.reward)) # We add the experiment to the memory of the agent 
             
         ############################
-
+        self.nn.gradientDescent(input_nn,uprime)
         #self.nn._train_one_step(input_nn,input_target,parameters, self.end)
-        self.nn.train_one_step_other(input_nn,uprime)
+        #self.nn.train_one_step_other(input_nn,uprime)
         #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
 
     def getRewardAgent(self,direction = None): 
@@ -599,9 +603,10 @@ class State:
 
             self.action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
             #print(np.array(self.U_list))
+            """print("###########prob action##################")
             print(self.action_proba)
-            print(len(self.lessons))
-            print("The temperature is %f"%(self.Temp))
+            print("###########prob action##################")
+            print("The temperature is %f"%(self.Temp))"""
             return np.random.choice(np.arange(4),p=self.action_proba)  # choice a random choice relating to the probability distribution given by the softmax algorith
         else:
             return np.argmax(self.U_list)
@@ -687,7 +692,8 @@ class State:
 
 def execute_simulation_learning(path_to_nn, display=False): 
     if not(os.path.isfile(path_to_nn)):
-        nn = NeuralNetwork(n_hidden = 30)
+        #nn = NeuralNetwork(n_hidden = 30)
+        nn = Neural_Network()
         print("the file %s doesn't exist!"%(path_to_nn))
     else: 
         print("the file %s exist!"%(path_to_nn))

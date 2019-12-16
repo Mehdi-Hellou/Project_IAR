@@ -1,5 +1,6 @@
 from agent import *
 from neural_network import *
+from neural_network_self import *
 from dynamic_environment import *
 import threading
 
@@ -28,7 +29,8 @@ if __name__ == '__main__':
         with open(name_File, "a") as f:
                 f.write("Parameter : lr = %.3f Temp_init = %.3f \n"%(lr,Temp[0]))
         for i in range(1):
-            nn = NeuralNetwork(30, lr=lr)
+            #nn = NeuralNetwork(30, lr=lr)
+            nn = Neural_Network()
             env = State(obstacles, nn, Temp[0],display = False)
             for epoch in range(0,100):
                 
@@ -48,7 +50,7 @@ if __name__ == '__main__':
                     #count+=0.1
                     env.moveAgent(learning = True)
                     #if count%0.2==0: 
-                    env.moveEnnemy()
+                    #env.moveEnnemy()
                 # experience replay 
                 """if epoch > 12: 
                     env.replay(nb_lessons)"""
@@ -64,7 +66,7 @@ if __name__ == '__main__':
                             #count+=0.1                            
                             env.moveAgent(learning = False)
                             #if count%0.2==0: 
-                            env.moveEnnemy()
+                            #env.moveEnnemy()
 
                     result.append(sum(mean_food)/50)
                     mean_food = []
@@ -73,6 +75,10 @@ if __name__ == '__main__':
                 f.write("experiment {} mean food : {} \n".format(i+1,result))
                 result = []
 
-            env.save_utility_network(path_to_nn)
-    
+            #env.save_utility_network(path_to_nn)
+        """env.display = True
+        env.print_grid_line()
+        env.moveAgent(learning=True) 
+        env.moveEnnemy()
+        env.grille.mainloop()"""
 
