@@ -419,12 +419,12 @@ class State:
 
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
-                self.grille.after(1200, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+                self.grille.after(5000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
         self.print_grid_line()
-        self.moveAgent(learning=False) 
-        self.moveEnnemy()
+        self.moveAgent(learning=True) 
+       #self.moveEnnemy()
         self.grille.mainloop() 
 
     def end_simulation(self):
@@ -582,34 +582,28 @@ class State:
         the function that selection the action given the different merit of each action
         """ 
         if self.Temp!=0:
-            if len(self.lessons) > 60:  
-                # if the agent haven't already gotten food since a certain time 
-                # we increase the temperature by 0.1 
-                if self.count_without_food>10: 
-                    if self.Temp>=(1/20): 
-                        self.Temp = 1/20
-                    else: 
-                        self.Temp+=0.005      
+            if len(self.lessons) > 40:  
+            # if the agent haven't already gotten food since a certain time 
+            # we increase the temperature by 0.1 
+                if self.count_without_food>8:
+                    self.Temp += 0.0001 
+                    if self.Temp>(1/20): 
+                        self.Temp = 1/20      
                 else: 
-                    if self.Temp<=(1/60):
+                    self.Temp -= 0.0001
+                    if self.Temp<(1/60):
                         self.Temp = 1/60
-                    else: 
-                        self.Temp -= 0.005
-                        
+                            
             s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
             self.action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
             #print(np.array(self.U_list))
-            #print(self.action_proba)
-            #print("The temperature is %f"%(self.Temp))
+            print(self.action_proba)
+            print(len(self.lessons))
+            print("The temperature is %f"%(self.Temp))
             return np.random.choice(np.arange(4),p=self.action_proba)  # choice a random choice relating to the probability distribution given by the softmax algorith
         else:
-            p = random.uniform(0, 1)
-            if p > 0.1: 
-                #print(self.U_list)
-                return np.argmax(self.U_list)
-            else: 
-                return np.random.randint(4)
+            return np.argmax(self.U_list)
 
     def chooseLessons(self,nb_lessons):
         """
@@ -625,7 +619,7 @@ class State:
         """
         replay a list of lessons in order to train the network with it
         """
-
+        minibatch = []
         # Sample minibatch from the memory
         for i in range(0,nb_lessons): 
             k = self.chooseLessons(nb_lessons)
@@ -698,7 +692,7 @@ def execute_simulation_learning(path_to_nn, display=False):
         print("the file %s exist!"%(path_to_nn))
         nn = NeuralNetwork(path_load = path_to_nn)
 
-    experiment = State(obstacles, nn, 0,display)
+    experiment = State(obstacles, nn, 1/40,display)
 
     if not display:        
         while not(experiment.end):
@@ -756,7 +750,7 @@ if __name__ == '__main__':
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
     for i in range(5):
-        execute_simulation_learning("Utility_network/NN_0.100.h5",display=True)
+        execute_simulation_learning("Utility_network/NN_0.100_v2.h5",display=True)
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)

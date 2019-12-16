@@ -35,12 +35,6 @@ class NeuralNetwork(object):
             init = tf.constant_initializer(0.1*np.random.rand(145,n_hidden))
             self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
 
-            """init = tf.constant_initializer(0.1*np.random.rand(n_hidden,n_hidden))
-            self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
-
-            init = tf.constant_initializer(0.1*np.random.rand(n_hidden,n_hidden))
-            self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))"""
-
             #Add the output layers
             init = tf.constant_initializer(0.1*np.random.rand(n_hidden,1))
             self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
@@ -48,9 +42,9 @@ class NeuralNetwork(object):
         else:
             print("Same NN")
             self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
-        
+
         self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
-        
+        self.loss_fn = tf.keras.losses.MeanAbsoluteError()
 
     def predict(self,x): 
         return self.model(x)
@@ -63,7 +57,9 @@ class NeuralNetwork(object):
         """
         with tf.GradientTape() as tape:
             yp = self.predict(inputs)
-            loss_value = customLoss(yp,target)
+            #loss_value = customLoss(yp,target)
+            loss_value = self.loss_fn(target,yp)
+
         print("the prediction is %s" %(yp))
         print("the target is %s" %(target))
         return loss_value, tape.gradient(loss_value, self.model.trainable_variables)
@@ -120,7 +116,7 @@ def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):
     network.train_one_step_other(input_nn,target)
     print(input_nn)
     print(target)
-    network.train(input_nn, target)
+    #network.train(input_nn, target)
     if path_save != None:
         network.save_on_file(path_save)
     return output
@@ -129,7 +125,8 @@ def try_nn(nb_hidden, input_nn, parameters,path_load = None, path_save = None):
 if __name__ == '__main__':
     input_nn = np.random.choice(2, size = 145)
     input_nn = input_nn.reshape(1,145)
-    output = try_nn(5, input_nn, [0.4,0.9],path_load = "save.h5", path_save = "save.h5")
+    #output = try_nn(5, input_nn, [0.4,0.9],path_load = "save.h5", path_save = "save.h5")
+    output = try_nn(5, input_nn, [0.4,0.9])
     #model = NeuralNetwork(5)
 
 #     output = model.predict(input_nn) 
