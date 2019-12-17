@@ -34,16 +34,14 @@ class NeuralNetwork(object):
             #inputs = tf.keras.layers.Input(shape=(145,))
 
             # add the hidden layers 
-            init = tf.constant_initializer(0.1*np.random.rand(145,n_hidden))
+            init = tf.constant_initializer(np.random.uniform(-0.1,0.1,[145,n_hidden]))
             self.model.add(tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init))
             #x = tf.keras.layers.Dense( n_hidden, activation = new_sigmoid, kernel_initializer= init)(inputs)
-            #self.model.add(tf.keras.layers.Dense( n_hidden, activation = "softmax", kernel_initializer= init))
 
             #Add the output layers
-            init = tf.constant_initializer(0.01*np.random.rand(n_hidden,1))
+            init = tf.constant_initializer(np.random.uniform(-0.1,0.1,[n_hidden,1]))
             self.model.add(tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init ) )
             #outputs = tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init )(x)
-            #self.model.add(tf.keras.layers.Dense(1, activation = "softmax", kernel_initializer= init ) )
 
             #self.model = tf.keras.Model(inputs=inputs, outputs=outputs)           
             self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 

@@ -10,7 +10,7 @@ if __name__ == '__main__':
     l_lr2 = [0.01, 0.03, 0.05, 0.07]
     Temp = [1/20,1/30,1/40,1/50,1/60]
     Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
-    for lr in l_lr[2:3]: 
+    for lr in l_lr[1:2]: 
         
         path_to_nn = "Utility_network/NN_%.3f_test.h5"%(lr)
         name_File = "Result/result_%.3f_test.txt"%(lr)
@@ -29,10 +29,10 @@ if __name__ == '__main__':
         with open(name_File, "a") as f:
                 f.write("Parameter : lr = %.3f Temp_init = %.3f \n"%(lr,Temp[0]))
         for i in range(1):
-            #nn = NeuralNetwork(30, lr=lr)
-            nn = Neural_Network()
+            nn = NeuralNetwork(30, lr=lr)
+            #nn = Neural_Network()
             env = State(obstacles, nn, Temp[0],display = False)
-            for epoch in range(0,100):
+            for epoch in range(0,1000):
                 
                 if epoch%60 == 0: 
                     #T = Temp[int(epoch/60)]
@@ -47,10 +47,10 @@ if __name__ == '__main__':
                 count = 0
                 env.reset(False,result,T)
                 while not env.end:
-                    #count+=0.1
+                    count+=0.1
                     env.moveAgent(learning = True)
-                    #if count%0.2==0: 
-                    #env.moveEnnemy()
+                    if count%0.2==0: 
+                        env.moveEnnemy()
                 # experience replay 
                 """if epoch > 12: 
                     env.replay(nb_lessons)"""
@@ -63,10 +63,10 @@ if __name__ == '__main__':
                         env.reset(True,mean_food,T)
                         count = 0
                         while not env.end:
-                            #count+=0.1                            
+                            count+=0.1                            
                             env.moveAgent(learning = False)
-                            #if count%0.2==0: 
-                            #env.moveEnnemy()
+                            if count%0.2==0: 
+                                env.moveEnnemy()
 
                     result.append(sum(mean_food)/50)
                     mean_food = []

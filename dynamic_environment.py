@@ -365,10 +365,9 @@ class State:
         
         x,y = self.agent.getPosition()
             
-        if self.lookupEnnemies(x,y) or self.killed: # if the movement of the agent is on an ennemie's position it is the end of the simulation
-            print("Catch by the ennemies !!!")
+        if self.lookupEnnemies(x,y) or self.killed or self.dead: # if the movement of the agent is on an ennemie's position it is the end of the simulation
+            print("Catch by the ennemies  or dead!!!")
             self.agent.reward = -1.0
-            self.killed = True
             self.end = True
 
         elif self.lookupFood(x,y):
@@ -400,7 +399,7 @@ class State:
         if self.display:
             if self.end:
                 self.end_simulation()
-            self.grille.after(6000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+            self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
 
             
     def moveEnnemy(self):
@@ -420,7 +419,7 @@ class State:
 
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
-                self.grille.after(6000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+                self.grille.after(1000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
         self.print_grid_line()
@@ -441,31 +440,31 @@ class State:
          self.agent.rotate_previousAction(3)+[self.agent.get_previous_collision()]
         sensors_result_O = self.agent.sensors(self, direction=2) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
-        #sensors_result_O = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
-        # self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
         sensors_result_S = self.agent.sensors(self, direction=1) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
-        #sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
-        # self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
         sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
-        #sensors_result_E = self.rotationEnvironment(90) + + self.agent.get_energy_coarsed()+\
-         #self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
+
+        """sensors_result_O = self.rotationEnvironment(90) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
+        sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
+        sensors_result_E = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]"""
 
         input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
         input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
         input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
         input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
-        """self.input_list =   [input_nn_E.reshape(1,145),
+        self.input_list =   [input_nn_E.reshape(1,145),
                              input_nn_S.reshape(1,145),
                              input_nn_O.reshape(1,145),
-                             input_nn_N.reshape(1,145)]"""
-        self.input_list =   [input_nn_E,
+                             input_nn_N.reshape(1,145)]
+        """self.input_list =   [input_nn_E,
                              input_nn_S,
                              input_nn_O,
-                             input_nn_N]
-                             
+                             input_nn_N]"""
         self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
         #print(self.input_list)
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
@@ -481,24 +480,25 @@ class State:
          self.agent.rotate_previousAction(3)+[int(self.agent.get_previous_collision())]
         sensors_result_O = self.agent.sensors(self, direction=2) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(2) + [int(self.agent.get_previous_collision())]
-        #sensors_result_O = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
-        # self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
         sensors_result_S = self.agent.sensors(self, direction=1) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(1) + [int(self.agent.get_previous_collision())]
-        #sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
-        # self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
         sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(0) + [int(self.agent.get_previous_collision())]
-        #sensors_result_E = self.rotationEnvironment(90) + + self.agent.get_energy_coarsed()+\
-         #self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
+
+        """sensors_result_O = self.rotationEnvironment(90) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
+        sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
+        sensors_result_E = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
+         self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]"""
 
         input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
         input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
         input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
         input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
-        #l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
-        l_input = [input_nn_E,input_nn_S,input_nn_O,input_nn_N]
+        l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
+        #l_input = [input_nn_E,input_nn_S,input_nn_O,input_nn_N]
         ######################### Configure the sensor inputs given the movement of the agent #########################
 
         print("The reward in baskpropagating is %f" %(self.agent.reward) ) 
@@ -531,9 +531,9 @@ class State:
             self.memory.append((input_nn,action,input_target,self.agent.reward)) # We add the experiment to the memory of the agent 
             
         ############################
-        self.nn.gradientDescent(input_nn,uprime)
+        #self.nn.gradientDescent(input_nn,uprime)
         #self.nn._train_one_step(input_nn,input_target,parameters, self.end)
-        #self.nn.train_one_step_other(input_nn,uprime)
+        self.nn.train_one_step_other(input_nn,uprime)
         #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
 
     def getRewardAgent(self,direction = None): 
@@ -563,24 +563,21 @@ class State:
         #x_agent, y_agent = self.agent.getPosition()
         positionEnnemies = [i.getPosition() for i in self.ennemies]
 
-        env_move_S = np.rot90(np.asarray(self.environment)).tolist()   # when we make a rotation of 90 degrees of the map
-        env_move_E = np.rot90(np.asarray(env_move_S)).tolist()          # when we make a rotation of 180 degrees of the map
-        env_move_O = np.rot90(np.asarray(env_move_E)).tolist()          # when we make a rotation of 270 degrees of the map
+        env_move_S = np.rot90(np.asarray(self.environment),2).tolist()   # when we make a rotation of 90 degrees of the map
+        env_move_E = np.rot90(np.asarray(self.environment),3).tolist()          # when we make a rotation of 180 degrees of the map
+        env_move_O = np.rot90(np.asarray(self.environment)).tolist()          # when we make a rotation of 270 degrees of the map
 
-        ##x_agent, y_agent = (24 - y_agent, x_agent)  # the position of agent changes after a rotation of the map
         positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies] # the ennemie position changes after a rotation of the map
 
         if angle == 180 or angle == 270: 
-            #x_agent, y_agent = (24 - y_agent, x_agent)
             positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
             if angle == 270: 
-                #x_agent, y_agent = (24 - y_agent, x_agent)
                 positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
-                return self.agent.sensors(self, environment = env_move_O, positionEnnemies = positionEnnemies)
+                return self.agent.sensors(self, environment = env_move_E, positionEnnemies = positionEnnemies)
             else:
                 return self.agent.sensors(self, environment = env_move_S, positionEnnemies = positionEnnemies)
        
-        return self.agent.sensors(self, environment = env_move_E, positionEnnemies = positionEnnemies)
+        return self.agent.sensors(self, environment = env_move_O, positionEnnemies = positionEnnemies)
 
     def actionSelector(self):
         """
@@ -692,8 +689,8 @@ class State:
 
 def execute_simulation_learning(path_to_nn, display=False): 
     if not(os.path.isfile(path_to_nn)):
-        #nn = NeuralNetwork(n_hidden = 30)
-        nn = Neural_Network()
+        nn = NeuralNetwork(n_hidden = 30)
+        #nn = Neural_Network()
         print("the file %s doesn't exist!"%(path_to_nn))
     else: 
         print("the file %s exist!"%(path_to_nn))

@@ -28,7 +28,7 @@ class Neural_Network():
         
         self.wh = np.random.uniform(-0.1,0.1,[145,30]) 
         self.wo = np.random.uniform(-0.1,0.1,[30, 1])
-        self.lr = 0.3
+        self.lr = 0.1
 
     def predict(self, X): 
         # feedforward
@@ -58,6 +58,7 @@ class Neural_Network():
         dzo_dwo = ah
 
         dcost_wo = np.outer(dzo_dwo, dcost_dao * dao_dzo)
+        #dcost_wo = np.dot(dzo_dwo.T, dcost_dao * dao_dzo)
 
         # Phase 2 =======================
 
@@ -69,6 +70,7 @@ class Neural_Network():
         dah_dzh = sigmoid_der(zh) 
         dzh_dwh = X
         dcost_wh = np.outer(dzh_dwh.T, dah_dzh * dcost_dah)
+        #np.dot(dzh_dwh.T, dah_dzh * dcost_dah)
         # Update Weights ================
 
         self.wh -= self.lr * dcost_wh
@@ -79,8 +81,8 @@ if __name__ == '__main__':
     np.random.seed(5)
     input_nn2 = np.random.choice(2, size = 145)
     nn = Neural_Network()
-
+    input_nn2.reshape(145,1)
     output = nn.predict(input_nn2)
-    
+    input_nn.reshape(145,1)
     nn.gradientDescent(input_nn,output)
 

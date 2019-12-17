@@ -59,18 +59,23 @@ class Agent(object):
         else :
             self.energy += value
         
-        if self.remaining_energy() < 0: 
+        if self.remaining_energy() <= 0: 
             self.energy = 0
             self.reward = -1.0
-            end = True
-        # We set the coarse coding of the agent's energy for the neural network
-        len_now = int(self.energy//2.5) 
-        self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
-
-        if end and state != None: # if the agent hasn't remained energy  
             state.dead = True
-            state.end = True  # we restart the simulation
+
+        # We set the coarse coding of the agent's energy for the neural network
+        len_now = int(self.energy//2.5) if self.energy!= 40 else 15 
+        #self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
+        #print(len_now)
+        #print(self.energy)
+        if self.energy!=0: 
+            self.coarseEnergy = [1 if i==len_now else 0 for i in range(16)]
+        else: 
+            self.coarseEnergy = [0 for i in range(16)]
+
         print(self.coarseEnergy)
+        print(self.energy)
         return 
 
     def get_energy_coarsed(self): 
