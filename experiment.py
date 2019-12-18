@@ -3,16 +3,16 @@ from neural_network import *
 from neural_network_self import *
 from dynamic_environment import *
 import threading
-
+from simple_nn import Network
 
 if __name__ == '__main__': 
-    l_lr = [0.001,0.01,0.1,0.3,1.0]
+    l_lr = [0.001,0.01,0.1,0.15,0.3,1.0]
     l_lr2 = [0.01, 0.03, 0.05, 0.07]
     Temp = [1/20,1/30,1/40,1/50,1/60]
     Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
-    for lr in l_lr[1:2]: 
+    for lr in l_lr[3:4]: 
         
-        path_to_nn = "Utility_network/NN_%.3f_test.h5"%(lr)
+        path_to_nn = "Utility_network/NN_%.3f_20-60test.h5"%(lr)
         name_File = "Result/result_%.3f_test.txt"%(lr)
 
         ### Load the neural network if the path exist or not 
@@ -28,15 +28,17 @@ if __name__ == '__main__':
         nb_lessons = 12 
         with open(name_File, "a") as f:
                 f.write("Parameter : lr = %.3f Temp_init = %.3f \n"%(lr,Temp[0]))
-        for i in range(1):
-            nn = NeuralNetwork(30, lr=lr)
+        nn = NeuralNetwork(30, lr=lr)
+        #nn = Network(30, lr = lr)
+        for i in range(7):
+            
             #nn = Neural_Network()
             env = State(obstacles, nn, Temp[0],display = False)
-            for epoch in range(0,1000):
+            for epoch in range(0,300):
                 
                 if epoch%60 == 0: 
-                    #T = Temp[int(epoch/60)]
-                    T = Temp[1]
+                    T = Temp[int(epoch/60)]
+                    #T = Temp[0]
                 # decrease the number of lessons played along the number of training made 
                 if epoch%37 == 36: 
                     if nb_lessons>4: 
@@ -75,7 +77,7 @@ if __name__ == '__main__':
                 f.write("experiment {} mean food : {} \n".format(i+1,result))
                 result = []
 
-            #env.save_utility_network(path_to_nn)
+            env.save_utility_network(path_to_nn)
         """env.display = True
         env.print_grid_line()
         env.moveAgent(learning=True) 

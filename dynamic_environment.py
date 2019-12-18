@@ -7,6 +7,7 @@ import threading
 from ennemy import Ennemy
 from neural_network import *
 from neural_network_self import *
+from simple_nn import Network
 
 random.seed()
 
@@ -43,7 +44,7 @@ obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
 The main class to train and test the agent into the simulator 
 """
 class State:
-    def __init__(self, obstacles, nn, temperature=1/60, display = False):
+    def __init__(self, obstacles, nn, temperature=1/60, display = False, isTest = False):
         self.environment = [[ 0 for j in range(25)] for i in range(25)]
         #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely)
         for (x,y) in obstacles:
@@ -64,7 +65,10 @@ class State:
         self.end = False 
         self.nn = nn  # the neural network used for the learning 
         self.gamma = 0.9  # the parameters for the learning
-        self.Temp = temperature # The temperature for the stochastic action selector 
+        self.Temp = temperature # The temperature for the stochastic action selector
+        if isTest: 
+            self.Temp = 0
+
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.totalFood = 0 #food eaten during the simulation
         self.count_without_food = 0 # a count to compute when the robot is stuck in a area without getting food 
@@ -399,7 +403,7 @@ class State:
         if self.display:
             if self.end:
                 self.end_simulation()
-            self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+            self.grille.after(3000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
 
             
     def moveEnnemy(self):
@@ -419,7 +423,7 @@ class State:
 
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
-                self.grille.after(1000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+                self.grille.after(3000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
 
     def initiate_simulation(self): 
         self.print_grid_line()
@@ -466,7 +470,9 @@ class State:
                              input_nn_O,
                              input_nn_N]"""
         self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
+        #self.U_list = [self.nn.forward_propagation(i)[1] for i in self.input_list ]
         #print(self.input_list)
+        #print(self.U_list)
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
 
     def backpropagating(self): 
@@ -510,14 +516,20 @@ class State:
             U_list_y = [self.nn.predict(input_nn_E.reshape(1,145)),\
                         self.nn.predict(input_nn_S.reshape(1,145)),\
                         self.nn.predict(input_nn_O.reshape(1,145)),\
-                        self.nn.predict(input_nn_N.reshape(1,145))]        
-
+                        self.nn.predict(input_nn_N.reshape(1,145))]
+            """U_list_y = [self.nn.forward_propagation(input_nn_E.reshape(1,145))[1],\
+                        self.nn.forward_propagation(input_nn_S.reshape(1,145))[1],\
+                        self.nn.forward_propagation(input_nn_O.reshape(1,145))[1],\
+                        self.nn.forward_propagation(input_nn_N.reshape(1,145))[1]] """       
+            #print(U_list_y)
+            maxU = np.max(U_list_y)
+            #print(np.max(U_list_y))
             index_input_maxU = np.argmax(U_list_y)   # the input given for the backprogating is the one with the maximum utility
             input_target = l_input[index_input_maxU]
             """sensor = np.asarray(self.agent.sensors_without_rot(self)).astype(int)
             input_target = np.concatenate((sensor,input_nn)).reshape(1,145)
             input_target = l_input[self.agent.get_previousAction()[-1]]"""
-            uprime = self.agent.reward + self.gamma * self.nn.predict(input_target)    # input of the utility with the best value
+            uprime = self.agent.reward + self.gamma * maxU    # input of the utility with the best value
         
         else:
             uprime = self.agent.reward
@@ -531,10 +543,25 @@ class State:
             self.memory.append((input_nn,action,input_target,self.agent.reward)) # We add the experiment to the memory of the agent 
             
         ############################
+        #old_prediction = self.nn.predict(input_nn)
+        ##old_prediction = self.nn.forward_propagation(input_nn)[1]
         #self.nn.gradientDescent(input_nn,uprime)
-        #self.nn._train_one_step(input_nn,input_target,parameters, self.end)
+        #self.nn._train_one_step(input_nn,uprime,parameters, self.end)
         self.nn.train_one_step_other(input_nn,uprime)
         #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
+        #self.nn.backpropagation(input_nn,uprime)
+        #new_prediction = self.nn.predict(input_nn)
+        
+        """new_prediction = self.nn.forward_propagation(input_nn)[1]
+        print("la prédiction ciblée est:" , uprime)
+        print("la prédiction avant est: %5f, celle après est: %5f\n" %
+        (old_prediction,new_prediction))
+        improvement = 0
+        if old_prediction > uprime:
+             improvement = old_prediction - new_prediction
+        else:
+             improvement = new_prediction - old_prediction
+        print("la prédiction a été améliorée de:", improvement)"""
 
     def getRewardAgent(self,direction = None): 
         """
@@ -584,29 +611,31 @@ class State:
         the function that selection the action given the different merit of each action
         """ 
         if self.Temp!=0:
-            if len(self.lessons) > 40:  
+            """if len(self.lessons) > 40:  
             # if the agent haven't already gotten food since a certain time 
             # we increase the temperature by 0.1 
-                if self.count_without_food>8:
-                    self.Temp += 0.0001 
+                if self.count_without_food>12:
+                    self.Temp += 0.001 
                     if self.Temp>(1/20): 
                         self.Temp = 1/20      
                 else: 
-                    self.Temp -= 0.0001
+                    self.Temp -= 0.001
                     if self.Temp<(1/60):
-                        self.Temp = 1/60
-                            
+                        self.Temp = 1/60"""                            
             s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
             self.action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
-            #print(np.array(self.U_list))
-            """print("###########prob action##################")
-            print(self.action_proba)
+            print(np.array(self.U_list))
             print("###########prob action##################")
+            print(self.action_proba)
+            """print("###########prob action##################")
             print("The temperature is %f"%(self.Temp))"""
-            return np.random.choice(np.arange(4),p=self.action_proba)  # choice a random choice relating to the probability distribution given by the softmax algorith
+            action = np.random.choice(np.arange(4),p=self.action_proba)  # choice a random choice relating to the probability distribution given by the softmax algorith 
         else:
-            return np.argmax(self.U_list)
+            action =  np.argmax(self.U_list)
+        print("###################################action####################################")
+        print(action)
+        return action 
 
     def chooseLessons(self,nb_lessons):
         """
@@ -652,15 +681,6 @@ class State:
 
         self.agent = agt.Agent(12,18, 40)
 
-        """self.ennemies = []
-        for i in range(4):
-            x = random.randint(0,24)
-            y = random.randint(0,24)
-            while not self.is_empty(x,y):
-                x = random.randint(0,24)
-                y = random.randint(0,24)
-            self.ennemies.append(Ennemy(x,y,self))   """
-
         self.ennemies = [Ennemy(6,6,self), Ennemy(12,2,self), Ennemy(12,6,self), Ennemy(18,6,self)]
         self.environment = [[ 0 if j==2 else j for j in i] for i in self.environment]
         # we reset the location of the food 
@@ -687,26 +707,26 @@ class State:
 
 ###################################################################### End Class State ######################################################################
 
-def execute_simulation_learning(path_to_nn, display=False): 
+def execute_simulation_learning(path_to_nn, temperature,display=False): 
     if not(os.path.isfile(path_to_nn)):
-        nn = NeuralNetwork(n_hidden = 30)
-        #nn = Neural_Network()
+        #nn = NeuralNetwork(n_hidden = 30, lr =0.01)
+        nn = Network(30)
         print("the file %s doesn't exist!"%(path_to_nn))
     else: 
         print("the file %s exist!"%(path_to_nn))
         nn = NeuralNetwork(path_load = path_to_nn)
 
-    experiment = State(obstacles, nn, 1/40,display)
-
+    experiment = State(obstacles, nn, temperature = 1/20, display=display)
+    experiment.save_utility_network(path_to_nn)
     if not display:        
         while not(experiment.end):
             experiment.moveEnnemy()
             experiment.moveAgent(learning = False)
 
-def train_network(path_save_nn): 
+def train_network(path_save_nn, temperature): 
     for i in range(20):
         print("----------------------------------------train%d---------------------------------------------" % i)
-        execute_simulation_learning(path_save_nn, display=True)
+        execute_simulation_learning(path_save_nn, temperature, display=True)
         
 
 def execute_simulation_no_learning_no_display(path_to_nn = None):
@@ -714,7 +734,7 @@ def execute_simulation_no_learning_no_display(path_to_nn = None):
         nn = NeuralNetwork(30)
     else:
         nn = NeuralNetwork(path_load = path_to_nn)
-    experiment = State(obstacles, nn, 1/60)
+    experiment = State(obstacles, nn, temperature = 1/60, isTest = True)
 
     while not(experiment.end):
         experiment.moveEnnemy()
@@ -753,8 +773,18 @@ if __name__ == '__main__':
         namefile ="result{}.txt".format(j) 
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
-    for i in range(5):
-        execute_simulation_learning("save.h5",display=True)
+    T = [1/20,1/40,1/60]
+    for i in range(15):
+        #execute_simulation_learning("test.h5",display=True)
+        if i%5 == 0: 
+            temperature = T[int(i/5)]
+
+        train_network("test.h5",temperature)
+        (m,l,d,k) = test_network("test.h5")
+        namefile ="result_lr_0.01.txt".format(i) 
+        with open(namefile, "a") as f:
+            f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {}, result = {} .\n".format((i+1)*20,m,d,k,l))
+
     """nn = NeuralNetwork(5)
     test = State(obstacles, nn, display=False)
     test.agent.setPosition(x=12, y=5)

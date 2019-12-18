@@ -44,13 +44,16 @@ class NeuralNetwork(object):
             #outputs = tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init )(x)
 
             #self.model = tf.keras.Model(inputs=inputs, outputs=outputs)           
-            self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 
+            """self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 
+                              loss=customLoss)          # the loss function"""
+            self.model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate=lr), # optimizer 
                               loss=customLoss)          # the loss function
         else:
             print("Same NN")
             self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
 
-        self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
+        #self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         self.loss_fn = tf.keras.losses.MeanAbsoluteError()
 
     def predict(self,x): 
@@ -75,23 +78,25 @@ class NeuralNetwork(object):
     def _train_one_step(self, X, Xtarget,parameters, end):
         """
         X : list of inputs of differents action that could be performed 
-        """        
+        """       
+        ytarget = Xtarget
         r = parameters[1]
         gamma = parameters[0]
         with tf.GradientTape() as tape:
             yp = self.predict(X)
 
-            if end:
+            """if end:
                 ytarget = r
             else: 
-                ytarget = self.predict(Xtarget) * gamma + r
+                ytarget = self.predict(Xtarget) * gamma + r"""
             
             loss = customLoss(ytarget,yp)
-        #print(loss)
-        print(tf.executing_eagerly())
+
+        print("the target is %s"%(ytarget))
+        print("the prediction is %s"%(yp))
         gradients = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
-        tf.print("Step: {},         Loss: {}".format(int(self.optimizer.iterations),loss))
+        tf.print("Step: %s,         Loss: %s"%(self.optimizer.iterations,loss))
         d = dict(loss=loss)
         #tf.print(yp[0], loss)        
 
@@ -103,7 +108,6 @@ class NeuralNetwork(object):
         """
         #print("########################Input###############################")
         #print(X)
-
         loss , gradients = self.grad(X,target)
         #print("########gradient########")
         #tf.print(gradients[0]) 
