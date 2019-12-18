@@ -7,7 +7,7 @@ import threading
 from ennemy import Ennemy
 from neural_network import *
 from neural_network_self import *
-from simple_nn import Network
+from simple_nn import *
 
 random.seed()
 
@@ -469,8 +469,8 @@ class State:
                              input_nn_S,
                              input_nn_O,
                              input_nn_N]"""
-        self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
-        #self.U_list = [self.nn.forward_propagation(i)[1] for i in self.input_list ]
+        #self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
+        self.U_list = [self.nn.forward_propagation(i)[1] for i in self.input_list ]
         #print(self.input_list)
         #print(self.U_list)
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
@@ -513,14 +513,14 @@ class State:
         
         
         if not self.end:
-            U_list_y = [self.nn.predict(input_nn_E.reshape(1,145)),\
+            """U_list_y = [self.nn.predict(input_nn_E.reshape(1,145)),\
                         self.nn.predict(input_nn_S.reshape(1,145)),\
                         self.nn.predict(input_nn_O.reshape(1,145)),\
-                        self.nn.predict(input_nn_N.reshape(1,145))]
-            """U_list_y = [self.nn.forward_propagation(input_nn_E.reshape(1,145))[1],\
+                        self.nn.predict(input_nn_N.reshape(1,145))]"""
+            U_list_y = [self.nn.forward_propagation(input_nn_E.reshape(1,145))[1],\
                         self.nn.forward_propagation(input_nn_S.reshape(1,145))[1],\
                         self.nn.forward_propagation(input_nn_O.reshape(1,145))[1],\
-                        self.nn.forward_propagation(input_nn_N.reshape(1,145))[1]] """       
+                        self.nn.forward_propagation(input_nn_N.reshape(1,145))[1]]        
             #print(U_list_y)
             maxU = np.max(U_list_y)
             #print(np.max(U_list_y))
@@ -547,9 +547,9 @@ class State:
         ##old_prediction = self.nn.forward_propagation(input_nn)[1]
         #self.nn.gradientDescent(input_nn,uprime)
         #self.nn._train_one_step(input_nn,uprime,parameters, self.end)
-        self.nn.train_one_step_other(input_nn,uprime)
+        #self.nn.train_one_step_other(input_nn,uprime)
         #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
-        #self.nn.backpropagation(input_nn,uprime)
+        self.nn.backpropagation(input_nn,uprime)
         #new_prediction = self.nn.predict(input_nn)
         
         """new_prediction = self.nn.forward_propagation(input_nn)[1]
@@ -703,7 +703,8 @@ class State:
         Save the utility network into a file 
         """
         print("Save the neural network to : "+path_save)
-        self.nn.save_on_file(path_save)
+        #self.nn.save_on_file(path_save)
+        self.nn.saveParameters(path_save)
 
 ###################################################################### End Class State ######################################################################
 
@@ -714,10 +715,12 @@ def execute_simulation_learning(path_to_nn, temperature,display=False):
         print("the file %s doesn't exist!"%(path_to_nn))
     else: 
         print("the file %s exist!"%(path_to_nn))
-        nn = NeuralNetwork(path_load = path_to_nn)
+        #nn = NeuralNetwork(path_load = path_to_nn)
+        nn = torch.load(path_to_nn)
 
     experiment = State(obstacles, nn, temperature = 1/20, display=display)
     experiment.save_utility_network(path_to_nn)
+
     if not display:        
         while not(experiment.end):
             experiment.moveEnnemy()
@@ -731,9 +734,12 @@ def train_network(path_save_nn, temperature):
 
 def execute_simulation_no_learning_no_display(path_to_nn = None):
     if path_to_nn ==None:
-        nn = NeuralNetwork(30)
+        #nn = NeuralNetwork(30)
+        nn = Network(30)
     else:
-        nn = NeuralNetwork(path_load = path_to_nn)
+        #nn = NeuralNetwork(path_load = path_to_nn)
+        nn = torch.load(path_to_nn)
+    
     experiment = State(obstacles, nn, temperature = 1/60, isTest = True)
 
     while not(experiment.end):
@@ -779,8 +785,8 @@ if __name__ == '__main__':
         if i%5 == 0: 
             temperature = T[int(i/5)]
 
-        train_network("test.h5",temperature)
-        (m,l,d,k) = test_network("test.h5")
+        train_network("NN.pt",temperature)
+        (m,l,d,k) = test_network("NN.pt")
         namefile ="result_lr_0.01.txt".format(i) 
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {}, result = {} .\n".format((i+1)*20,m,d,k,l))

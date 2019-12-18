@@ -73,12 +73,9 @@ class Network(nn.Module):
         self.b2 += d_outp.sum() * self.learning_rate
         self.b1 += d_hidn.sum() * self.learning_rate 
 
-    def saveParameters(self, model):
+    def saveParameters(self,path_to_save):
         # we will use the PyTorch internal storage functions
-        torch.save(model, "NN")
-
-    def loadParameters(self,namefile): 
-        torch.load(namefile)
+        torch.save(self, path_to_save)
 
 if __name__ == '__main__':
     NN = Network(30)
@@ -95,8 +92,10 @@ if __name__ == '__main__':
     print("the vector weight 2 %s" %(NN.w2))    
     print("the vector weight 1 %s" %(NN.w1))
 
-    NN.saveParameters("NN")
+    NN.saveParameters("NN.pt")
 
-    nn = NN.loadParameters("NN")
+    nn = torch.load("NN.pt")
     print("the vector weight 2 %s" %(nn.w2))    
     print("the vector weight 1 %s" %(nn.w1))
+
+    print(nn.w1 == NN.w1)
