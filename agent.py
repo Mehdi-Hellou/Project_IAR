@@ -44,7 +44,7 @@ class Agent(object):
         self.y = y
         self.energy = energy
         self.coarseEnergy = [1 for i in range(16)]   # the coarse coding of the energy for the Neural Network 
-        self.previousAction = [0 for i in range(4)] # the 4 previous actions made by the agent 
+        self.previousAction = [0 for i in range(4)] # the previou action made by the agent 
         self.previous_collision = False # if the agent collide with an obstacle in the previous
         self.reward = 0.0
         return
@@ -93,7 +93,8 @@ class Agent(object):
         """ 
 
         temp_prevAction = [] # the temporal list return by the method
-
+        """print("#################Previous action######################")
+        print(self.get_previousAction())"""
         if direction==0:
             temp_prevAction = np.roll(self.get_previousAction(),-1).tolist()
 
@@ -105,7 +106,9 @@ class Agent(object):
 
         else: 
             temp_prevAction = self.get_previousAction()
-
+        """print("#################temp_prevAction_rotate######################")
+        print(direction)
+        print(temp_prevAction)"""
         return temp_prevAction 
 
     def updateEnergy(self,canvas, energy_bar, getFood):

@@ -44,16 +44,16 @@ class NeuralNetwork(object):
             #outputs = tf.keras.layers.Dense(1, activation = new_sigmoid, kernel_initializer= init )(x)
 
             #self.model = tf.keras.Model(inputs=inputs, outputs=outputs)           
-            """self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 
-                              loss=customLoss)          # the loss function"""
-            self.model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate=lr), # optimizer 
+            self.model.compile(optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 ), # optimizer 
                               loss=customLoss)          # the loss function
+            """self.model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate=lr), # optimizer 
+                              loss=customLoss)          # the loss function"""
         else:
             print("Same NN")
             self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
 
-        #self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+        self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
+        #self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         self.loss_fn = tf.keras.losses.MeanAbsoluteError()
 
     def predict(self,x): 
@@ -62,11 +62,14 @@ class NeuralNetwork(object):
     def save_on_file(self,path):
         self.model.save(path)
 
-    def grad(self, inputs, target):
+    def grad(self, x, target):
         """
         """
+        """print("####################### The input #############################")
+        print("the input is ",np.asarray(x))
+        print("####################### The input #############################")"""
         with tf.GradientTape() as tape:
-            yp = self.predict(inputs)
+            yp = self.predict(x)
             loss_value = customLoss(yp,target)
             #loss_value = self.loss_fn(target,yp)
 

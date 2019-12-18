@@ -81,8 +81,6 @@ if __name__ == '__main__':
     np.random.seed(5)
     input_nn2 = np.random.choice(2, size = 145)
     nn = Neural_Network()
-    input_nn2.reshape(145,1)
     output = nn.predict(input_nn2)
-    input_nn.reshape(145,1)
     nn.gradientDescent(input_nn,output)
 
