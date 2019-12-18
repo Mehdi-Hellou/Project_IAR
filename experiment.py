@@ -10,11 +10,11 @@ if __name__ == '__main__':
     l_lr2 = [0.1, 0.125, 0.15, 0.175]
     Temp = [1/20,1/30,1/40,1/50,1/60]
     Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
-    for lr in l_lr2[1:2]: 
+    for lr in l_lr2[2:3]: 
         
-        path_to_nn = "Utility_network/NN_%.3f_20-60.h5"%(lr)
+        path_to_nn = "Utility_network/NN_%.3f_20-60_R.h5"%(lr)
         #path_to_nn = "Utility_network/NN_%.3f_20-60.pt"%(lr)
-        name_File = "Result/result_%.3f.txt"%(lr)
+        name_File = "Result/result_%.3f_R.txt"%(lr)
 
         ### Load the neural network if the path exist or not 
         if os.path.isfile(path_to_nn):
@@ -35,12 +35,13 @@ if __name__ == '__main__':
             #n = Model(30,lr=lr)
             #nn = Neural_Network()
             #nn = Network(30, lr = lr)
-            env = State(obstacles, nn, Temp[0],display = False)
+            env = State(obstacles, nn, Temp[0],display = False, interval = [1/20,1/60])
             for epoch in range(0,300):
                 
                 if epoch%60 == 0: 
-                    T = Temp[int(epoch/60)]
-                    #T = Temp[0]
+                    #T = Temp[int(epoch/60)]
+                    T = Temp[2]
+                
                 # decrease the number of lessons played along the number of training made 
                 if epoch%37 == 36: 
                     if nb_lessons>4: 
@@ -56,8 +57,8 @@ if __name__ == '__main__':
                     if count%0.2==0: 
                         env.moveEnnemy()
                 # experience replay 
-                """if epoch > 12: 
-                    env.replay(nb_lessons)"""
+                if epoch > 12: 
+                    env.replay(nb_lessons)
 
                 if epoch%20 == 19: 
                     #phase test

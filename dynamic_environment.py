@@ -44,7 +44,7 @@ obstacles+=[(13,2),(13,3), (13,8), (13,16), (13,21), (13,22)]
 The main class to train and test the agent into the simulator 
 """
 class State:
-    def __init__(self, obstacles, nn, temperature=1/60, display = False, isTest = False):
+    def __init__(self, obstacles, nn, temperature=1/60, display = False, isTest = False, interval=[1/20,1/60]):
         self.environment = [[ 0 for j in range(25)] for i in range(25)]
         #0=empty, 1=obstacle, 2= food (ennemy and agent stored separetely)
         for (x,y) in obstacles:
@@ -69,6 +69,7 @@ class State:
         if isTest: 
             self.Temp = 0
 
+        self.var_T = interval   # interval that define the max and min value the temperature could take during learning 
         self.Ulist = []  # list of Utility for all the actions at each state use for the learning  
         self.totalFood = 0 #food eaten during the simulation
         self.count_without_food = 0 # a count to compute when the robot is stuck in a area without getting food 
@@ -534,7 +535,7 @@ class State:
         
         else:
             uprime = self.agent.reward
-            input_target = None
+            input_target = np.array(None)
         
         action = self.agent.get_previousAction().index(1)
         print("the action is ",action)
@@ -584,14 +585,14 @@ class State:
             if len(self.lessons) > 60:  
             # if the agent haven't already gotten food since a certain time 
             # we increase the temperature by 0.1 
-                if self.count_without_food>12:
+                if self.count_without_food>18:
                     self.Temp += 0.001 
-                    if self.Temp>(1/20): 
-                        self.Temp = 1/20      
+                    if self.Temp>=(self.var_T[0]): 
+                        self.Temp = self.var_T[0]      
                 else: 
                     self.Temp -= 0.001
-                    if self.Temp<(1/60):
-                        self.Temp = 1/60
+                    if self.Temp <= (self.var_T[-1]):
+                        self.Temp = self.var_T[-1]
             
             s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
@@ -618,24 +619,29 @@ class State:
 
     def replay(self,nb_lessons): 
         """
-        replay a list of lessons in order to train the network with it
+        replay a list of lessons in order to train the network with them
         """
         minibatch = []
         # Sample minibatch from the memory
-        for i in range(0,nb_lessons): 
-            k = self.chooseLessons(nb_lessons)
-            minibatch.append(self.lessons[k])
-        
-        # Extract informations from each memory
-        for state,action,next_state,reward in minibatch:
-            # if done, make our target reward
-            target = reward
-            if not(next_state==None):
-                # predict the future discounted reward
-                target = reward + self.gamma * self.nn.predict(next_state)
-            
-            # Train the Neural Net with the state and next state input
-            self.nn.train_one_step_other(state,target)
+        for i in range(nb_lessons): 
+            k = self.chooseLessons(nb_lessons)    
+            #  We go over the pexperiences into lessons 
+            for experience in self.lessons[k]: 
+                
+                # Extract informations from each memory
+                state = experience[0]
+                action = experience[1]
+                next_state = experience[2]
+                reward = experience[3]
+                
+                # if done, make our target reward
+                target = reward
+                if next_state.all()!=None:
+                    # predict the future discounted reward
+                    target = reward + self.gamma * self.nn.predict(next_state)
+                
+                # Train the Neural Net with the state and next state input
+                self.nn.train_one_step_other(state,target)
 
     def reset(self, isTest, foodGet, temperature, display = False): 
         """

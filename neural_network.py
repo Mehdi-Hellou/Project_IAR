@@ -109,11 +109,7 @@ class NeuralNetwork(object):
         target : the target label 
 
         """
-        #print("########################Input###############################")
-        #print(X)
-        loss , gradients = self.grad(X,target)
-        #print("########gradient########")
-        #tf.print(gradients[0]) 
+        loss , gradients = self.grad(X,target) 
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         tf.print("Step: {},         Loss: {}".format(self.optimizer.iterations.numpy(),loss))
         #self.print_weight()
