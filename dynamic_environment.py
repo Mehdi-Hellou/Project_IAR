@@ -8,6 +8,7 @@ from ennemy import Ennemy
 from neural_network import *
 from neural_network_self import *
 from simple_nn import *
+import copy
 
 random.seed()
 
@@ -396,7 +397,7 @@ class State:
         if learning:
             # we add the list of experiences to the lessons list if it's the end 
             if self.end:
-                if len(self.lessons)==100:   # the maximum amount accepted by the lessons list is 100
+                if len(self.lessons)>=100:   # the maximum amount accepted by the lessons list is 100
                     self.lessons.pop(0)
                 self.lessons.append(self.memory) # we add all the experiment from this play to the lessons' list
             self.backpropagating()        
@@ -542,14 +543,15 @@ class State:
         input_nn = self.input_list[action]
         ##### Add to the lesson the action chose in order to go the next state, 
         ##### the next state after to have performed the action, and the reward given
-        if(self.action_proba[action] > 0.01):   # the Pl minimum to choose the action corresponding to the action policy, cf to the paper part experience replay             
-            self.memory.append((input_nn,action,input_target,self.agent.reward)) # We add the experiment to the memory of the agent 
+        if(self.action_proba[action] > 0.01):   # the Pl minimum to choose the action corresponding to the action policy, cf to the paper part experience replay
+            #next_states = [copy.deepcopy(input_nn_E).reshape(1,145), copy.deepcopy(input_nn_S).reshape(1,145), copy.deepcopy(input_nn_O).reshape(1,145), copy.deepcopy(input_nn_N).reshape(1,145)]
+            self.memory.append((input_nn,action,np.asarray(copy.deepcopy(l_input)),self.agent.reward)) # We add the experiment to the memory of the agent 
             
         ############################
         #self.nn.gradientDescent(input_nn,uprime)
         #self.nn._train_one_step(input_nn,uprime,parameters, self.end)
-        self.nn.train_one_step_other(input_nn,uprime)
-        #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
+        #self.nn.train_one_step_other(input_nn,uprime)
+        self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
         #self.nn.backpropagation(input_nn,uprime)
         #self.nn.train(input_nn,uprime)
     
@@ -626,22 +628,32 @@ class State:
         for i in range(nb_lessons): 
             k = self.chooseLessons(nb_lessons)    
             #  We go over the pexperiences into lessons 
-            for experience in self.lessons[k]: 
+            replayed_experiences = self.lessons[k]
+            replayed_experiences.reverse()
+            for experience in replayed_experiences: 
                 
                 # Extract informations from each memory
+                #print(experience)
                 state = experience[0]
                 action = experience[1]
-                next_state = experience[2]
+                next_states = experience[2]
                 reward = experience[3]
                 
                 # if done, make our target reward
                 target = reward
-                if next_state.all()!=None:
-                    # predict the future discounted reward
-                    target = reward + self.gamma * self.nn.predict(next_state)
+                if not(list(next_states)==None):
+                # predict the future discounted reward
+                    #print(next_states)
+                    options = [self.nn.predict(i) for i in next_states]
+                    pmax = options[0]
+                    for i in range(len(options)):
+                        if options[i]>pmax:
+                            pmax = options[i]
+                    target = reward + self.gamma * pmax
                 
                 # Train the Neural Net with the state and next state input
-                self.nn.train_one_step_other(state,target)
+                #self.nn.train_one_step_other(state,target)
+                self.nn.train(state,tf.convert_to_tensor([[target]]))
 
     def reset(self, isTest, foodGet, temperature, display = False): 
         """
