@@ -1,13 +1,13 @@
-### Self-Improving Reactive Agent Based on Reinforcement Learning, Planning and Teaching 
+# Self-Improving Reactive Agent Based on Reinforcement Learning, Planning and Teaching 
 
 Voici le code de notre projet d'IAR. Il se décompose en plusieurs fichiers.
 
 
-### DEPENDANCES 
+# DEPENDANCES 
 - tkinter 
 - tensorflow2.0
 
-### DESCRIPTION FICHIERS 
+# DESCRIPTION FICHIERS 
 
 ## dynamic_environment.py 
 
