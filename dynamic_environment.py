@@ -405,7 +405,7 @@ class State:
         if self.display:
             if self.end:
                 self.end_simulation()
-            self.grille.after(10, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
+            self.grille.after(1000, lambda: self.moveAgent(learning))    # Resubscribe to make move again the agent each second
 
             
     def moveEnnemy(self):
@@ -425,11 +425,11 @@ class State:
 
         if not(self.killed):
             if self.display:# if it's not the end we make move again the ennemies 
-                self.grille.after(30, self.moveEnnemy)  # Resubscribe to make move again the ennemy each 1.2 seconds
+                self.grille.after(1000, self.moveEnnemy)  # Resubscribe to make move again the ennemy each second
 
     def initiate_simulation(self): 
         self.print_grid_line()
-        self.moveAgent(learning=True) 
+        self.moveAgent(learning=False) 
         self.moveEnnemy()
         self.grille.mainloop() 
 
@@ -517,7 +517,7 @@ class State:
             
         ############################
         self.nn.train_one_step_other(input_nn,uprime)
-        #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
+        #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))   # use the method fit to train the neural network
     
     def actionSelector(self):
         """
@@ -681,18 +681,23 @@ def test_network(path_to_nn):
     mean = sum(results)/50
     return (mean,results,nb_dead,nb_killed)
 
+def execute_simulation_no_learning_display(path_to_nn = None):
+    nn = NeuralNetwork(path_load = path_to_nn)
+    experiment = State(obstacles, nn, temperature = 1/60, isTest = True, display = True)
+
 if __name__ == '__main__':
 
     T = [1/20,1/40,1/60]
     for i in range(15):
-        #execute_simulation_learning("NN.pt",0,display=True)
-        if i%5 == 0: 
+        execute_simulation_learning("NN.pt",0,display=True)
+        
+        """if i%5 == 0: 
             temperature = T[int(i/5)]
 
         train_network("NN.pt",temperature)
         (m,l,d,k) = test_network("NN.pt")
         namefile ="result_lr_0.05.txt".format(i) 
         with open(namefile, "a") as f:
-            f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {}, result = {} .\n".format((i+1)*20,m,d,k,l))
+            f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {}, result = {} .\n".format((i+1)*20,m,d,k,l))"""
 
     

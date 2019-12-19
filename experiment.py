@@ -12,7 +12,7 @@ if __name__ == '__main__':
     Temp2 = [1/60, 1/80, 1/100, 1/120, 1/140]
     Temp3 = [1/40, 1/60, 1/70, 1/80, 1/100]
     Temp4 = [1/120, 1/140, 1/160, 1/180, 1/200]
-    for T in Temp3[:2]: 
+    for T in Temp3[2:3]: 
         for lr in l_lr[3:4]:
             
             # path to save the neural network 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
             with open(name_File, "a") as f:
                     f.write("Parameter : lr = %.3f Temp_init = %s \n"%(lr,T))
 
-            for i in range(2):
+            for i in range(4,7):
                 nn = NeuralNetwork(30, lr=lr)    # the neural network use during each experiment
                 env = State(obstacles, nn, T,display = False, interval = [])  # we create the state for the trainings
                 nb_lessons = 12 
@@ -79,5 +79,5 @@ if __name__ == '__main__':
                     f.write("experiment {} mean food : {} \n".format(i+1,result))
                     result = []
 
-                env.save_utility_network
+                env.save_utility_network(path_to_nn)
 

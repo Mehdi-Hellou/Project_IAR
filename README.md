@@ -28,6 +28,10 @@ Ce fichier permet de faire bouger les ennemies selon la politique décrite dans 
 ## neural_network.py 
 C'est dans ce fichier là qui est créée le réseaux de neurones pour calculer l'utilité d'une action étant donné l'état dans lequel l'agent se trouve.
 
+Vous pouvez modifier la fonction d'erreur et utiliser soit la mean absolute error(mae) qui calcule la valeur absolue de l'erreur entre la target et la prédiction. 
+Vous pouvez aussi utiliser la mean squared error(mse) qui calcule la valeur l'erreur quadratique entre la target et la prédiction.
+
 Les librairies utilisées sont tensorflow 2.0 pour créer le réseau de neurone et faire l'apprentissage par backpropagation.
 
-
+## test.py 
+Fichier test, pour vérifier principalement si les senseurs y compris les patchs ont bien été codé.  

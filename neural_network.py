@@ -48,8 +48,9 @@ class NeuralNetwork(object):
             self.model  = tf.keras.models.load_model(path_load, custom_objects={'new_sigmoid': new_sigmoid, "customLoss" : customLoss})
 
         self.optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum = 0.9 )
-        #self.loss_fn = tf.keras.losses.MeanAbsoluteError()
-        self.loss_fn = tf.keras.losses.MeanSquaredError()
+        # uncomment this line to use the MAE 
+        #self.loss_fn = tf.keras.losses.MeanAbsoluteError()   # loss function that uses Mean Absolute differences from keras in order to compute the error 
+        self.loss_fn = tf.keras.losses.MeanSquaredError()     # loss function that uses Mean Squared differences from keras in order to compute the error
 
     def predict(self,x): 
         return self.model(x)
