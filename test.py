@@ -86,61 +86,6 @@ class testState(unittest.TestCase):
                     self.assertFalse(testgrid.Opatch(1,i,j))
                     self.assertFalse(testgrid.Opatch(2,i,j))
     
-    
-    #test fonction rotations 
-    def testRotation(self):
-        testgrid= env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
-        env_90 = env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
-        env_180 = env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
-        env_270 = env.State(env.obstacles[:int((len(env.obstacles)-1)/2)],nn)
-
-        # We delete all the case whit food since it is plot randomly
-        for i in range(env.width):
-            for j in range(env.heigth):
-                if testgrid.environment[i][j] == 2: 
-                    testgrid.environment[i][j]=0
-                if env_90.environment[i][j] == 2: 
-                    env_90.environment[i][j]=0
-                if env_180.environment[i][j] == 2: 
-                    env_180.environment[i][j]=0
-                if env_270.environment[i][j] == 2: 
-                    env_270.environment[i][j]=0
-
-        #testgrid.print_grid_line()
-        #testgrid.grille.mainloop()
-        e = np.asarray(testgrid.environment)
-        
-        env_90.environment = np.rot90(e).tolist() # environment with a rotation of 90
-        env_90.ennemies = [Ennemy(18,6,env_90.environment), Ennemy(22,12,env_90.environment), Ennemy(18,12,env_90.environment), Ennemy(18,18,env_90.environment)]
-
-        #env_90.print_grid_line()
-        #env_90.grille.mainloop()
-
-        env_180.environment = np.rot90(e,2).tolist() # environment with a rotation of 180
-        env_180.ennemies = [Ennemy(18,18,env_180.environment), Ennemy(12,22,env_180.environment), Ennemy(12,18,env_180.environment), Ennemy(6,18,env_180.environment)]
-        #env_180.print_grid_line()
-        #env_180.grille.mainloop()
-
-        env_270.environment = np.rot90(e,3).tolist() # environment with a rotation of 270
-        env_270.ennemies = [Ennemy(6,18,env_270.environment), Ennemy(2,12,env_270.environment), Ennemy(6,12,env_270.environment), Ennemy(6,6,env_270.environment)]
-        #env_270.print_grid_line()
-        #env_270.grille.mainloop()
-
-        sensors_S = testgrid.rotationEnvironment(180) # sensors when the environment is rotated at 90 degrees
-        sensors_E = testgrid.rotationEnvironment(270) # sensors when the environment is rotated at 180 degrees
-        sensors_O = testgrid.rotationEnvironment(90) # sensors when the environment is rotated at 270 degrees
-
-        sensors_env_90 = env_90.agent.sensors( env_90)
-        sensors_env_270 = env_270.agent.sensors( env_270)
-        sensors_env_180 = env_180.agent.sensors( env_180)
-        
-        print(np.asarray(sensors_env_180).astype(int))
-        print(np.asarray(sensors_S).astype(int))
-        #self.assertTrue(sensors_E==sensors_env_270)
-        self.assertTrue(sensors_S==sensors_env_180)
-        self.assertTrue(sensors_O==sensors_env_90)
-
-    #def testExperienceReplay(self): 
 
         
 if __name__ == '__main__':

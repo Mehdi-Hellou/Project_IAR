@@ -66,9 +66,7 @@ class Agent(object):
 
         # We set the coarse coding of the agent's energy for the neural network
         len_now = int(self.energy//2.5) if self.energy!= 40 else 15 
-        #self.coarseEnergy = [1 for i in range(len_now)] + [0 for i in range(16-len_now)]
-        #print(len_now)
-        #print(self.energy)
+
         if self.energy!=0: 
             self.coarseEnergy = [1 if i==len_now else 0 for i in range(16)]
         else: 
@@ -187,9 +185,6 @@ class Agent(object):
                       the self environment, or the one after a rotation (90,180,270)   
         direction = the direction of the movement 
         """
-        # Toujours l'agent bouge vers le Nord
-        # car l'utilité est calculée en fonction du mérite de bouger vers le nord
-        # suivant les différentes configurations des ennemies   
         
         x,y = self.getPosition()
 
@@ -252,46 +247,11 @@ class Agent(object):
             (i,j) = oriente(i0,j0, direction)
             result.append(state.opatch(x+i, y+j,environment, positionEnnemies))
 
-        return result
-
-    def sensors_without_rot(self, state, direction=None):
-        #return the vector of detection
-        #pour les directions: 3= nord, 2=ouest, 1=sud, 0 = est
-        result=[]
-        
-        if direction != None: 
-            (x,y) = self.move_simulated(state,direction)
-        else:
-            (x,y) = self.getPosition()
-            
-        #food
-        for (i,j) in Yfood:
-            result.append(state.Ypatch(x+i, y+j))
-            #positionSensorY.append((x+i, y+j))
-        for (i,j) in Ofood: 
-            result.append(state.Opatch(2, x+i, y+j))
-            #positionSensorO.append((x+i, y+j,environment))
-        for (i,j) in Xfood:
-            result.append(state.Xpatch(2, x+i, y+j))
-            #positionSensorX.append((x+i, y+j,environment))
-        #ennemies
-        for (i,j) in Oennemies:
-            result.append(state.Opatch(1, x+i, y+j))
-            #positionSensorO.append((x+i,y+j,environment))
-        for (i,j) in Xennemies:
-            result.append(state.Xpatch(1, x+i, y+j))
-            #positionSensorX.append((x+i,y+j,environment))
-        #obstacles
-        for (i,j) in oobstacles:
-            result.append(state.opatch(x+i, y+j))
-
-        return result
-    
-    
+        return result   
             
     def policy(self, state, agentText, pas, canvas = None):
         """
-        The policy of the agentgiven the current neural network, the best utility 
+        The policy of the agent given the current neural network, the best utility 
         for the different action it can performed and its current state. 
         """
         action = state.learning_Utility()   # learning step of the agent to get the action 
@@ -333,35 +293,3 @@ class Agent(object):
             k-=1
 
         return positionObstacle
-
-        def debugSensor(self, state, type): 
-             result=[]
-        (x,y)=state.agent.getPosition()
-
-        #List for debug and see if the sensors are well-made 
-        positionSensorY = []
-        positionSensorX = []
-        positionSensorO = []
-        positionSensoro = []
-
-        if type ==2: 
-            #food
-            for (i,j) in Yfood:
-                positionSensorY.append((x+i, y+j))
-            for (i,j) in Ofood:
-                positionSensorO.append((x+i, y+j))
-            for (i,j) in Xfood:
-                positionSensorX.append((x+i, y+j))
-            return positionSensorY ,positionSensorO, positionSensorX
-        #ennemies
-        elif type == 1: 
-            for (i,j) in Oennemies:
-                positionSensorO.append((x+i,y+j))
-            for (i,j) in Xennemies:
-                positionSensorX.append((x+i,y+j))
-            return positionSensorO,positionSensorO
-        else :
-            #obstacles
-            for (i,j) in oobstacles:
-                positionSensoro.append((x+i,y+j))
-            return positionSensoro

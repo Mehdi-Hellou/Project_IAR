@@ -451,13 +451,6 @@ class State:
         sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]
 
-        """sensors_result_O = self.rotationEnvironment(90) + self.agent.get_energy_coarsed()+\
-         self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
-        sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
-         self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
-        sensors_result_E = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
-         self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]"""
-
         input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
         input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
         input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
@@ -467,16 +460,7 @@ class State:
                              input_nn_S.reshape(1,145),
                              input_nn_O.reshape(1,145),
                              input_nn_N.reshape(1,145)]
-        """self.input_list =   [input_nn_E,
-                             input_nn_S,
-                             input_nn_O,
-                             input_nn_N]"""
         self.U_list = [self.nn.predict(i) for i in self.input_list ] #The utility according the different acts performed    
-        #self.U_list = [self.nn.forward(i) for i in self.input_list ]
-        """print("#################################list of input###############################################")
-        print("the input is ",self.input_list)
-        print("##############################################################################################")"""
-        #print(self.U_list)
         return self.actionSelector()    #Select the action acording a propbabilitics distribution given in the paper
 
     def backpropagating(self): 
@@ -495,20 +479,12 @@ class State:
         sensors_result_E = self.agent.sensors(self, direction=0) + self.agent.get_energy_coarsed()+\
          self.agent.rotate_previousAction(0) + [int(self.agent.get_previous_collision())]
 
-        """sensors_result_O = self.rotationEnvironment(90) + self.agent.get_energy_coarsed()+\
-         self.agent.rotate_previousAction(2) + [self.agent.get_previous_collision()]
-        sensors_result_S = self.rotationEnvironment(180) + self.agent.get_energy_coarsed()+\
-         self.agent.rotate_previousAction(1) + [self.agent.get_previous_collision()]
-        sensors_result_E = self.rotationEnvironment(270) + self.agent.get_energy_coarsed()+\
-         self.agent.rotate_previousAction(0) + [self.agent.get_previous_collision()]"""
-
         input_nn_N = np.asarray(sensors_result_N).astype(int)    # input when the Nord action is performed 
         input_nn_O = np.asarray(sensors_result_O).astype(int)    # input when the West action is performed
         input_nn_S = np.asarray(sensors_result_S).astype(int)    # input when the South action is performed
         input_nn_E = np.asarray(sensors_result_E).astype(int)    # input when the West action is performed
 
         l_input = [input_nn_E.reshape(1,145),input_nn_S.reshape(1,145),input_nn_O.reshape(1,145),input_nn_N.reshape(1,145)]
-        #l_input = [input_nn_E,input_nn_S,input_nn_O,input_nn_N]
         ######################### Configure the sensor inputs given the movement of the agent #########################
 
         print("The reward in baskpropagating is %f" %(self.agent.reward) ) 
@@ -519,19 +495,12 @@ class State:
             U_list_y = [self.nn.predict(input_nn_E.reshape(1,145)),\
                         self.nn.predict(input_nn_S.reshape(1,145)),\
                         self.nn.predict(input_nn_O.reshape(1,145)),\
-                        self.nn.predict(input_nn_N.reshape(1,145))]
-            """U_list_y = [self.nn.forward(input_nn_E.reshape(1,145)),\
-                        self.nn.forward(input_nn_S.reshape(1,145)),\
-                        self.nn.forward(input_nn_O.reshape(1,145)),\
-                        self.nn.forward(input_nn_N.reshape(1,145))]  """      
+                        self.nn.predict(input_nn_N.reshape(1,145))]    
             #print(U_list_y)
             maxU = np.max(U_list_y)
             #print(np.max(U_list_y))
             index_input_maxU = np.argmax(U_list_y)   # the input given for the backprogating is the one with the maximum utility
-            input_target = l_input[index_input_maxU]
-            """sensor = np.asarray(self.agent.sensors_without_rot(self)).astype(int)
-            input_target = np.concatenate((sensor,input_nn)).reshape(1,145)
-            input_target = l_input[self.agent.get_previousAction().index(1)]"""
+            input_target = l_input[index_input_maxU]   # The input target with the max utility, add to the tuple given during the experience replay
             uprime = self.agent.reward + self.gamma * maxU    # input of the utility with the best value
         
         else:
@@ -539,7 +508,6 @@ class State:
             input_target = np.array(None)
         
         action = self.agent.get_previousAction().index(1)
-        print("the action is ",action)
         input_nn = self.input_list[action]
         ##### Add to the lesson the action chose in order to go the next state, 
         ##### the next state after to have performed the action, and the reward given
@@ -548,49 +516,22 @@ class State:
             self.memory.append((input_nn,action,np.asarray(copy.deepcopy(l_input)),self.agent.reward)) # We add the experiment to the memory of the agent 
             
         ############################
-        #self.nn.gradientDescent(input_nn,uprime)
-        #self.nn._train_one_step(input_nn,uprime,parameters, self.end)
-        #self.nn.train_one_step_other(input_nn,uprime)
-        self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
-        #self.nn.backpropagation(input_nn,uprime)
-        #self.nn.train(input_nn,uprime)
+        self.nn.train_one_step_other(input_nn,uprime)
+        #self.nn.train(input_nn,tf.convert_to_tensor([[uprime]]))
     
-    def rotationEnvironment(self, angle): 
-        """
-        Rotate the environment to establich the values of sensors according the rotation of the environment
-        angle : 90, 180 and 270 degrees rotation
-        """
-        #x_agent, y_agent = self.agent.getPosition()
-        positionEnnemies = [i.getPosition() for i in self.ennemies]
-
-        env_move_S = np.rot90(np.asarray(self.environment),2).tolist()   # when we make a rotation of 90 degrees of the map
-        env_move_E = np.rot90(np.asarray(self.environment),3).tolist()          # when we make a rotation of 180 degrees of the map
-        env_move_O = np.rot90(np.asarray(self.environment)).tolist()          # when we make a rotation of 270 degrees of the map
-
-        positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies] # the ennemie position changes after a rotation of the map
-
-        if angle == 180 or angle == 270: 
-            positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
-            if angle == 270: 
-                positionEnnemies = [(24-j,i) for (i,j) in positionEnnemies]
-                return self.agent.sensors(self, environment = env_move_E, positionEnnemies = positionEnnemies)
-            else:
-                return self.agent.sensors(self, environment = env_move_S, positionEnnemies = positionEnnemies)
-       
-        return self.agent.sensors(self, environment = env_move_O, positionEnnemies = positionEnnemies)
-
     def actionSelector(self):
         """
         the function that selection the action given the different merit of each action
         """ 
         if self.Temp!=0:
-            if len(self.lessons) > 60:  
+            if len(self.lessons) > 60 and self.var_T:  
             # if the agent haven't already gotten food since a certain time 
-            # we increase the temperature by 0.1 
-                if self.count_without_food>18:
-                    self.Temp += 0.001 
+            # we increase the temperature by 0.001 
+                if self.count_without_food>12:
+                    self.Temp += 0.01 
                     if self.Temp>=(self.var_T[0]): 
-                        self.Temp = self.var_T[0]      
+                        self.Temp = self.var_T[0]  
+                # otherwise we decrease the temperatur by 0.001    
                 else: 
                     self.Temp -= 0.001
                     if self.Temp <= (self.var_T[-1]):
@@ -599,11 +540,6 @@ class State:
             s = np.sum([np.exp(float(k)/self.Temp) for k in self.U_list])
 
             self.action_proba =[np.exp(float(m)/self.Temp)/s for m in self.U_list]
-            print(np.array(self.U_list))
-            """print("###########prob action##################")
-            print(self.action_proba)
-            print("###########prob action##################")
-            print("The temperature is %f"%(self.Temp))"""
             action = np.random.choice(np.arange(4),p=self.action_proba)  # choice a random choice relating to the probability distribution given by the softmax algorith 
         else:
             action =  np.argmax(self.U_list)
@@ -691,21 +627,19 @@ class State:
         """
         print("Save the neural network to : "+path_save)
         self.nn.save_on_file(path_save)
-        #torch.save(self.nn,path_save)
-        #self.nn.saveParameters(path_save)
 
 ###################################################################### End Class State ######################################################################
 
 def execute_simulation_learning(path_to_nn, temperature,display=False): 
+    """
+    Execute the simulation with learning. Purpose only for testing
+    """
     if not(os.path.isfile(path_to_nn)):
-        #nn = NeuralNetwork(n_hidden = 30, lr =0.01)
-        #nn = Network(30, lr = 0.1)
-        nn = Model(30, lr=0.05)
+        nn = NeuralNetwork(n_hidden = 30, lr =0.01)
         print("the file %s doesn't exist!"%(path_to_nn))
     else: 
         print("the file %s exist!"%(path_to_nn))
-        #nn = NeuralNetwork(path_load = path_to_nn)
-        nn = torch.load(path_to_nn)
+        nn = NeuralNetwork(path_load = path_to_nn)
 
     experiment = State(obstacles, nn, temperature = temperature, display=display)
     experiment.save_utility_network(path_to_nn)
@@ -724,12 +658,9 @@ def train_network(path_save_nn, temperature):
 def execute_simulation_no_learning_no_display(path_to_nn = None):
     if path_to_nn ==None:
         nn = NeuralNetwork(30)
-        #nn = Network(30)
-        nn = Model(30, lr=0.05)
     else:
-        #nn = NeuralNetwork(path_load = path_to_nn)
+        nn = NeuralNetwork(path_load = path_to_nn)
         print("Load the network !!!!!")
-        nn = torch.load(path_to_nn)
     
     experiment = State(obstacles, nn, temperature = 1/60, isTest = True)
 
@@ -751,25 +682,7 @@ def test_network(path_to_nn):
     return (mean,results,nb_dead,nb_killed)
 
 if __name__ == '__main__':
-    # start the experiment
-    """(m,l,d,k) = test_network("Utility_network/NN_0.010000.h5")
-    print("nourriture obtenue:", l)
-    print("moyenne:", m)""" 
-    #for i in range(7): # the number of experiment
-    
-    """for j in range(15): # there are 300 training during one experiment 
-        train_network("save.h5")
-        #food = execute_simulation_no_learning_no_display()
 
-        #print("food = ", food)
-
-        (m,l,d,k) = test_network("save.h5")
-        print("nourriture obtenue:", l)
-        print("moyenne:", m)
-        
-        namefile ="result{}.txt".format(j) 
-        with open(namefile, "a") as f:
-            f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {} .\n".format(j*20,m,d,k))"""
     T = [1/20,1/40,1/60]
     for i in range(15):
         #execute_simulation_learning("NN.pt",0,display=True)
@@ -781,11 +694,5 @@ if __name__ == '__main__':
         namefile ="result_lr_0.05.txt".format(i) 
         with open(namefile, "a") as f:
             f.write("After {} training the results are : mean = {}, number dead = {}, number killed = {}, result = {} .\n".format((i+1)*20,m,d,k,l))
-
-    """nn = NeuralNetwork(5)
-    test = State(obstacles, nn, display=False)
-    test.agent.setPosition(x=12, y=5)
-    test.print_sensors(1)
-    test.grille.mainloop()"""
 
     
