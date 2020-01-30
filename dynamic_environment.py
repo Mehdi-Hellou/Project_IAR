@@ -5,10 +5,9 @@ import tkinter
 import agent as agt
 import threading 
 from ennemy import Ennemy
-from neural_network import *
-from neural_network_self import *
-from simple_nn import *
+from neural_network import NeuralNetwork
 import copy
+import numpy as np
 
 random.seed()
 
@@ -216,13 +215,13 @@ class State:
                 centre = (X0+i*self.PAS, Y0+j*self.PAS) 
 
                 if (i,j)==self.agent.getPosition():
-                    self.agentText = self.can.create_text(centre, text = "I")
+                    self.agentText = self.can.create_text(centre, text = "I", fill='blue')
                 
                 elif (i,j) in [i.getPosition() for i in self.ennemies]:
-                    self.ennemyText.append(self.can.create_text(centre, text = "E"))
+                    self.ennemyText.append(self.can.create_text(centre, text = "E", fill='red'))
                 
                 elif self.environment[i][j]==2:
-                    self.foodText[(i,j)] = self.can.create_text(centre, text = "$")
+                    self.foodText[(i,j)] = self.can.create_text(centre, text = "$", fill='green')
 
                 elif self.environment[i][j] == 1:
                     self.can.create_text(centre, text = "O") 
@@ -688,10 +687,11 @@ def execute_simulation_no_learning_display(path_to_nn = None):
 if __name__ == '__main__':
 
     T = [1/20,1/40,1/60]
-    for i in range(15):
+    execute_simulation_no_learning_display("Utility_network/NN_0.150_70_mse.h5")
+    """for i in range(15):
         execute_simulation_learning("NN.pt",0,display=True)
         
-        """if i%5 == 0: 
+        if i%5 == 0: 
             temperature = T[int(i/5)]
 
         train_network("NN.pt",temperature)

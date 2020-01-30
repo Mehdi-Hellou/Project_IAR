@@ -16,8 +16,8 @@ if __name__ == '__main__':
         for lr in l_lr[3:4]:
             
             # path to save the neural network 
-            path_to_nn = "Utility_network/NN_%.3f_%d_mse.h5"%(lr,1/T)
-            name_File = "Result/result_%.3f_%d_mse.txt"%(lr, 1/T)     # path to save the result of experiments
+            path_to_nn = "Utility_network/NN_%.3f_%d_mse_var.h5"%(lr,1/T)
+            name_File = "Result/result_%.3f_%d_mse_var.txt"%(lr, 1/T)     # path to save the result of experiments
 
             ### Load the neural network if the path exist or not 
             if os.path.isfile(path_to_nn):
@@ -32,9 +32,9 @@ if __name__ == '__main__':
             with open(name_File, "a") as f:
                     f.write("Parameter : lr = %.3f Temp_init = %s \n"%(lr,T))
 
-            for i in range(4,7):
+            for i in range(6,7):
                 nn = NeuralNetwork(30, lr=lr)    # the neural network use during each experiment
-                env = State(obstacles, nn, T,display = False, interval = [])  # we create the state for the trainings
+                env = State(obstacles, nn, T,display = False, interval = Temp3)  # we create the state for the trainings
                 nb_lessons = 12 
                 for epoch in range(0,300):   # for 300 training environments   
                     
