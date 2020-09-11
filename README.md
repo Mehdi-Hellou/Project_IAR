@@ -1,37 +1,38 @@
 # Self-Improving Reactive Agent Based on Reinforcement Learning, Planning and Teaching 
 
-Voici le code de notre projet d'IAR. Il se décompose en plusieurs fichiers.
+Project to create a self-learning agent in a complex environment. Based on the paper "Self-improving reactive agents based on reinforcement learning, planning and teaching", Long-ji Lin, 1992. 
 
+# Purpose
+survive in a complex environment surrounded by predators, ressources and obstacles. The environment include an agent, 
+which can collect ressources and move inside the 2D environment to avoid predators and obstacles.  
 
 # DEPENDANCES 
 - tkinter 
 - tensorflow2.0
 
-# DESCRIPTION FICHIERS 
+# Files
 
 ## dynamic_environment.py 
 
-C'est fichier principal qui permet de créer l'environnement de simulation, là où l'agent va pouvoir bouger ainsi que les ennemies. 
-La grille d'affichage est réaliser en utilisant la librairie "tkinter" pour afficher l'environnement, les ennemies(E), les obstacles(O), l'agent(I) et la barre de vie en bas à gauche. 
+This is the main file that allows to create the simulation environment, where the agent will be able to move and the enemies will be able to move as well. 
+The display grid is realized using the "tkinter" library to display the environment, the enemies(E), the obstacles(O), the agent(I) and the life bar at the bottom left. 
 
-C'est aussi dans cette partie que l'agent va apprendre en s'aidant de ses senseurs et du réseaux de neurones, créé dans un autre fichier. 
+It is also in this part that the agent will learn using its sensors and the neural network, created in another file. 
 
 ## agent.py 
 
-C'est le fichier permettant de faire bouger l'agent selon la politique suivie, il peut aussi utiliser ses senseurs pour observer son environnement comprenant: 
-
-- Les obstacles, la nourriture et les ennemies. 
+This file allows the agent to move according to the policy and his sensors to observe his environment.
 
 ## ennemy.py 
-Ce fichier permet de faire bouger les ennemies selon la politique décrite dans l'article.
+This file describe the moving policy of ennemy according the algorithms defined on the paper. 
 
 ## neural_network.py 
-C'est dans ce fichier là qui est créée le réseaux de neurones pour calculer l'utilité d'une action étant donné l'état dans lequel l'agent se trouve.
+In this file, the neural network is created to calculate the usefulness of an action given the agent's state.
 
-Vous pouvez modifier la fonction d'erreur et utiliser soit la mean absolute error(mae) qui calcule la valeur absolue de l'erreur entre la target et la prédiction. 
-Vous pouvez aussi utiliser la mean squared error(mse) qui calcule la valeur l'erreur quadratique entre la target et la prédiction.
+You can modify the error function and whether use the mean absolute error(mae) which calculates the absolute value of the error between the target and the prediction, or use the mean squared error(mse) which calculates the value of the quadratic error between the target and the prediction.
 
-Les librairies utilisées sont tensorflow 2.0 pour créer le réseau de neurone et faire l'apprentissage par backpropagation.
+The libraries used are tensorflow 2.0 to create the neural network and do the backpropagation learning.
+
 
 ## test.py 
-Fichier test, pour vérifier principalement si les senseurs y compris les patchs ont bien été codé.  
+Test file to check if the sensors are well coded. 
